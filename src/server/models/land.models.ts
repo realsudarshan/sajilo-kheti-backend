@@ -1,14 +1,36 @@
-import { z } from 'zod';
+import { size, z } from 'zod';
 
 const clerkIdSchema = z.string().min(1, 'Clerk ID is required');
 
 export const LandStatusSchema = z.enum(['AVAILABLE', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']);
 
+
+//support of different unit of land
+export const LandUnitSchema = z.enum([
+  // Hilly System
+  "ROPANI",
+  "AANA",
+  "PAISA",
+  "DAAM",
+  // Terai System
+  "BIGHA",
+  "KATTHA",
+  "DHUR",
+  // Metric/Imperial
+  "SQ_FT",
+  "SQ_MTR"
+]);
+export const LandSizeSchema = z.object({
+  size: z.number().positive("Size must be a positive number"),
+  unit: LandUnitSchema,
+});
+
+
 // POST /land/publish
 export const publishLandInputSchema = z.object({
   ownerId: clerkIdSchema,
   location: z.string().min(1, 'Location is required'),
-  size: z.number().positive('Size must be positive'),
+  size: LandSizeSchema,
   price: z.number().positive('Price must be positive'),
   description: z.string().min(1, 'Description is required'),
   landpic: z.string().url('Invalid hero image URL'),
@@ -18,7 +40,7 @@ export const publishLandInputSchema = z.object({
     .optional()
     .default([]),
   title: z.string().optional(),
-  lalpurjaUrl: z.string()
+  lalpurjaUrl: z.string(),
 });
 
 export const publishLandResponseSchema = z.object({

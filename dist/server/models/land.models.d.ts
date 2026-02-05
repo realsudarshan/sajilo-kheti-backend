@@ -5,10 +5,48 @@ export declare const LandStatusSchema: z.ZodEnum<{
     LEASED: "LEASED";
     HIDDEN: "HIDDEN";
 }>;
+export declare const LandUnitSchema: z.ZodEnum<{
+    ROPANI: "ROPANI";
+    AANA: "AANA";
+    PAISA: "PAISA";
+    DAAM: "DAAM";
+    BIGHA: "BIGHA";
+    KATTHA: "KATTHA";
+    DHUR: "DHUR";
+    SQ_FT: "SQ_FT";
+    SQ_MTR: "SQ_MTR";
+}>;
+export declare const LandSizeSchema: z.ZodObject<{
+    size: z.ZodNumber;
+    unit: z.ZodEnum<{
+        ROPANI: "ROPANI";
+        AANA: "AANA";
+        PAISA: "PAISA";
+        DAAM: "DAAM";
+        BIGHA: "BIGHA";
+        KATTHA: "KATTHA";
+        DHUR: "DHUR";
+        SQ_FT: "SQ_FT";
+        SQ_MTR: "SQ_MTR";
+    }>;
+}, z.core.$strip>;
 export declare const publishLandInputSchema: z.ZodObject<{
     ownerId: z.ZodString;
     location: z.ZodString;
-    size: z.ZodNumber;
+    size: z.ZodObject<{
+        size: z.ZodNumber;
+        unit: z.ZodEnum<{
+            ROPANI: "ROPANI";
+            AANA: "AANA";
+            PAISA: "PAISA";
+            DAAM: "DAAM";
+            BIGHA: "BIGHA";
+            KATTHA: "KATTHA";
+            DHUR: "DHUR";
+            SQ_FT: "SQ_FT";
+            SQ_MTR: "SQ_MTR";
+        }>;
+    }, z.core.$strip>;
     price: z.ZodNumber;
     description: z.ZodString;
     landpic: z.ZodString;

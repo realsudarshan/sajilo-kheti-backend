@@ -10,6 +10,7 @@ import {
   updateLandStatusInputSchema,
   updateLandStatusResponseSchema,
 } from '../../models/land.models.js';
+import { convertToSqMeter } from '../../lib/converttosqmeter.js';
 
 export const landRouter = router({
   publish: publicProcedure
@@ -23,17 +24,17 @@ export const landRouter = router({
     .input(publishLandInputSchema)
     .output(publishLandResponseSchema)
     .mutation(async ({ ctx, input }) => {
+      const sqMeterSize = convertToSqMeter(input.size.size, input.size.unit);
       const land = await ctx.prisma.land.create({
         data: {
           ownerId: input.ownerId,
           description: input.description,
           location: input.location,
-          sizeInSqFt: input.size,
+          sizeInSqFt: sqMeterSize,
           pricePerMonth: input.price,
           heroImageUrl: input.landpic,
           galleryUrls: input.morelandpic ?? [],
-          lalpurjaUrl: input.lalpurjaUrl,
-          
+          lalpurjaUrl: input.lalpurjaUrl,  
         },
       });
       return {
@@ -170,3 +171,4 @@ export const landRouter = router({
       return { id: updated.id, status: updated.status };
     }),
 });
+

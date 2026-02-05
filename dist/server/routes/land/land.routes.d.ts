@@ -14,7 +14,10 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
         input: {
             ownerId: string;
             location: string;
-            size: number;
+            size: {
+                size: number;
+                unit: "ROPANI" | "AANA" | "PAISA" | "DAAM" | "BIGHA" | "KATTHA" | "DHUR" | "SQ_FT" | "SQ_MTR";
+            };
             price: number;
             description: string;
             landpic: string;

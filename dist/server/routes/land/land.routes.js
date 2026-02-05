@@ -1,6 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import { publicProcedure, router } from '../../trpc.js';
 import { getLandByIdInputSchema, landSchema, publishLandInputSchema, publishLandResponseSchema, searchLandInputSchema, searchLandResponseSchema, updateLandStatusInputSchema, updateLandStatusResponseSchema, } from '../../models/land.models.js';
+import { convertToSqMeter } from '../../lib/converttosqmeter.js';
 export const landRouter = router({
     publish: publicProcedure
         .meta({
@@ -13,12 +14,13 @@ export const landRouter = router({
         .input(publishLandInputSchema)
         .output(publishLandResponseSchema)
         .mutation(async ({ ctx, input }) => {
+        const sqMeterSize = convertToSqMeter(input.size.size, input.size.unit);
         const land = await ctx.prisma.land.create({
             data: {
                 ownerId: input.ownerId,
                 description: input.description,
                 location: input.location,
-                sizeInSqFt: input.size,
+                sizeInSqFt: sqMeterSize,
                 pricePerMonth: input.price,
                 heroImageUrl: input.landpic,
                 galleryUrls: input.morelandpic ?? [],
