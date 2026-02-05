@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import z from 'zod';
 import { adminProcedure, publicProcedure, router } from '../../trpc.js';
-import { createUserInputSchema, createUserResponseSchema, getAllUsersResponseSchema, updateKycStatusInputSchema, updateKycStatusResponseSchema, upgradeRequestInputSchema, upgradeRequestResponseSchema, } from '../../models/user.models..js';
+import { createUserInputSchema, createUserResponseSchema, getAllUsersResponseSchema, updateKycStatusInputSchema, updateKycStatusResponseSchema, upgradeRequestInputSchema, upgradeRequestResponseSchema, } from '../../models/user.models.js';
 //getAlluser,createuser,upgradeRequest,updateKycStatus
 export const userRouter = router({
     getAllUser: publicProcedure

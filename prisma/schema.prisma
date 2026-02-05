@@ -71,12 +71,15 @@ model Land {
   ownerId        String        // Clerk ID
   owner          User          @relation("OwnerLands", fields: [ownerId], references: [id])
   
-  title          String
+  title          String?
   description    String
   location       String
-  area           String        // e.g., "2 Ropani" or "10 Kattha"
+  area           String?       // e.g., "2 Ropani" or "10 Kattha"
+  sizeInSqFt     Float         // Area in square feet
   pricePerMonth  Float
-  lalpurjaUrl    String        // Ownership certificate
+  heroImageUrl   String        // Primary/hero photo
+  galleryUrls    String[]      // Additional images (max 5)
+  lalpurjaUrl    String?       // Ownership certificate (optional for listing)
   status         LandStatus    @default(AVAILABLE)
   
   applications   Application[]
