@@ -1,0 +1,130 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// --- ENUMS ---
+
+enum UserRole {
+  LEASER
+  OWNER
+  ADMIN
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+}
+
+enum EscrowStatus {
+  HOLDING
+  RELEASED
+  REFUNDED
+}
+
+enum LandStatus {
+  AVAILABLE
+  IN_NEGOTIATION
+  LEASED
+  HIDDEN
+}
+
+// --- MODELS ---
+
+model User {
+  id             String        @id @map("_id") // Clerk ID from frontend
+  email          String        @unique
+  password       String
+  name           String?
+  phone          String?
+  role           UserRole      @default(LEASER)
+  isKycVerified  Boolean       @default(false)
+  kycDetails     KycDetail?    // One-to-one relation for verification docs
+  
+  lands          Land[]        @relation("OwnerLands")
+  applications   Application[] @relation("LeaserApplications")
+  
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model KycDetail {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String   @unique // Clerk ID
+  user              User     @relation(fields: [userId], references: [id])
+  citizenshipNumber String
+  documentUrl       String   // URL to S3/Cloudinary for ID photo
+  selfieUrl         String?
+  status            String   @default("PENDING") // PENDING, APPROVED, REJECTED
+}
+
+model Land {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId        String        // Clerk ID
+  owner          User          @relation("OwnerLands", fields: [ownerId], references: [id])
+  
+  title          String
+  description    String
+  location       String
+  area           String        // e.g., "2 Ropani" or "10 Kattha"
+  pricePerMonth  Float
+  lalpurjaUrl    String        // Ownership certificate
+  status         LandStatus    @default(AVAILABLE)
+  
+  applications   Application[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Application {
+  id             String            @id @default(auto()) @map("_id") @db.ObjectId
+  landId         String            @db.ObjectId
+  land           Land              @relation(fields: [landId], references: [id])
+  
+  leaserId       String            // Clerk ID
+  leaser         User              @relation("LeaserApplications", fields: [leaserId], references: [id])
+  
+  proposedPlan   String            // The leaser's "point of view"
+  duration       Int               // Lease duration in months
+  status         ApplicationStatus @default(PENDING)
+  
+  escrow         Escrow?
+  agreement      LeaseAgreement?
+  chatChannelId  String?           // Stream Chat Channel ID
+  
+  createdAt      DateTime          @default(now())
+}
+
+model Escrow {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  applicationId  String       @unique @db.ObjectId
+  application    Application  @relation(fields: [applicationId], references: [id])
+  
+  amount         Float
+  paymentId      String?      // Reference from Khalti/eSewa
+  status         EscrowStatus @default(HOLDING)
+  commission     Float        // Your platform's cut
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model LeaseAgreement {
+  id                String      @id @default(auto()) @map("_id") @db.ObjectId
+  applicationId     String      @unique @db.ObjectId
+  application       Application @relation(fields: [applicationId], references: [id])
+  
+  malpotPaperUrl    String      // The scanned agreement from Malpot Karyalaya
+  adminVerified     Boolean     @default(false)
+  verifiedAt        DateTime?
+  
+  createdAt         DateTime    @default(now())
+}

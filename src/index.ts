@@ -1,20 +1,25 @@
 import express from 'express';
+import swaggerUi from 'swagger-ui-express';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { appRouter } from './server/index.js';
 import { createContext } from './server/context.js';
 import { createOpenApiExpressMiddleware, generateOpenApiDocument } from 'trpc-to-openapi';
 import fs from 'fs/promises';
+
 const app = express();
 app.use(express.json());
+
 const openApiDocument = generateOpenApiDocument(appRouter, {
-  baseUrl:"http://localhost:8000/api",
-  title:"My API",
-  version:"1.0.0",
-}
-)
+  baseUrl: 'http://localhost:8000/api',
+  title: 'My API',
+  version: '1.0.0',
+});
+
 app.get('/openapi.json', (req, res) => {
   res.json(openApiDocument);
 });
+
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
 app.use('/api', createOpenApiExpressMiddleware({
   router: appRouter,
   createContext,

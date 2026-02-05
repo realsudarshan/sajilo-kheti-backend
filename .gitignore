@@ -64,3 +64,7 @@ package-lock.json
 .eslintcache
 *v8.log
 /lib/
+/generated/prisma
+prisma.config.js
+prisma.config.d.ts
+*.map

@@ -54,4 +54,4 @@ export const updateKycStatusResponseSchema = z.object({
     userRole: z.string(),
     isKycVerified: z.boolean(),
 });
-//# sourceMappingURL=models.js.map
+//# sourceMappingURL=user.models..js.map

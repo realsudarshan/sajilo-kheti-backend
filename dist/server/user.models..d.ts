@@ -76,4 +76,4 @@ export declare const updateKycStatusResponseSchema: z.ZodObject<{
     userRole: z.ZodString;
     isKycVerified: z.ZodBoolean;
 }, z.core.$strip>;
-//# sourceMappingURL=models.d.ts.map
+//# sourceMappingURL=user.models..d.ts.map
