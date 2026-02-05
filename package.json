@@ -1,0 +1,27 @@
+{
+  "name": "express-trpc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsc-watch --onSuccess \"node dist/index.js\""
+  },
+  "keywords": [],
+  "author": "Sudarshan",
+  "license": "ISC",
+  "packageManager": "pnpm@10.9.0",
+  "dependencies": {
+    "@trpc/server": "^11.9.0",
+    "express": "^5.2.1",
+    "trpc-to-openapi": "^3.1.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.2.0",
+    "tsc-watch": "^7.2.0",
+    "typescript": "^5.9.3"
+  }
+}
