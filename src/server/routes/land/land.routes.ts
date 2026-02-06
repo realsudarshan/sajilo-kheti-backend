@@ -34,7 +34,8 @@ export const landRouter = router({
           pricePerMonth: input.price,
           heroImageUrl: input.landpic,
           galleryUrls: input.morelandpic ?? [],
-          lalpurjaUrl: input.lalpurjaUrl,  
+          lalpurjaUrl: input.lalpurjaUrl,
+           
         },
       });
       return {

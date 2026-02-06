@@ -95,8 +95,9 @@ model Application {
   leaserId       String            // Clerk ID
   leaser         User              @relation("LeaserApplications", fields: [leaserId], references: [id])
   
-  proposedPlan   String            // The leaser's "point of view"
-  duration       Int               // Lease duration in months
+  plans   String            // The leaser's "point of view"
+  leaseDurationInMonths       Int               // Lease duration in months
+  proposedMonthlyRent        Float             // Proposed rent by leaser
   status         ApplicationStatus @default(PENDING)
   
   escrow         Escrow?
@@ -104,6 +105,7 @@ model Application {
   chatChannelId  String?           // Stream Chat Channel ID
   
   createdAt      DateTime          @default(now())
+  additionalMessages String?      // Additional messages from leaser
 }
 
 model Escrow {
