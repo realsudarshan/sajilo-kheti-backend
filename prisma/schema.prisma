@@ -42,7 +42,6 @@ enum LandStatus {
 model User {
   id             String        @id @map("_id") // Clerk ID from frontend
   email          String        @unique
-  password       String
   name           String?
   phone          String?
   role           UserRole      @default(LEASER)

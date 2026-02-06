@@ -1,34 +1,35 @@
 import express from 'express';
 import swaggerUi from 'swagger-ui-express';
 import * as trpcExpress from '@trpc/server/adapters/express';
+import { createOpenApiExpressMiddleware, generateOpenApiDocument } from 'trpc-to-openapi';
+import { clerkMiddleware } from '@clerk/express';
 import { appRouter } from './server/index.js';
 import { createContext } from './server/context.js';
-import { createOpenApiExpressMiddleware, generateOpenApiDocument } from 'trpc-to-openapi';
 import fs from 'fs/promises';
 const app = express();
 app.use(express.json());
+// Clerk middleware MUST be before trpc/openapi
+app.use(clerkMiddleware());
+// 1. Generate OpenAPI Spec
 const openApiDocument = generateOpenApiDocument(appRouter, {
     baseUrl: 'http://localhost:8000/api',
-    title: 'My API',
+    title: 'Land Lease API',
     version: '1.0.0',
 });
-app.get('/openapi.json', (req, res) => {
-    res.json(openApiDocument);
-});
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
+// 2. REST API Endpoint (via trpc-to-openapi)
 app.use('/api', createOpenApiExpressMiddleware({
     router: appRouter,
     createContext,
 }));
+// 3. Standard tRPC Endpoint
 app.use('/trpc', trpcExpress.createExpressMiddleware({
     router: appRouter,
     createContext,
 }));
-fs.writeFile('./openapi.json', JSON.stringify(openApiDocument));
-app.get('/', (req, res) => {
-    res.json({ message: 'Hello, World!' });
-});
+// 4. Swagger UI
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
 app.listen(8000, () => {
-    console.log('Server is running on port 8000');
+    console.log('🚀 Server running on http://localhost:8000');
+    console.log('📖 Swagger docs at http://localhost:8000/docs');
 });
 //# sourceMappingURL=index.js.map

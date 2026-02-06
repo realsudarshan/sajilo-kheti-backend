@@ -59,15 +59,15 @@ export declare const upgradeRequestResponseSchema: z.ZodObject<{
 }, z.core.$strip>;
 export declare const KycStatusSchema: z.ZodEnum<{
     PENDING: "PENDING";
-    APPROVED: "APPROVED";
     REJECTED: "REJECTED";
+    APPROVED: "APPROVED";
 }>;
 export declare const updateKycStatusInputSchema: z.ZodObject<{
     userId: z.ZodString;
     status: z.ZodEnum<{
         PENDING: "PENDING";
-        APPROVED: "APPROVED";
         REJECTED: "REJECTED";
+        APPROVED: "APPROVED";
     }>;
 }, z.core.$strip>;
 export declare const updateKycStatusResponseSchema: z.ZodObject<{

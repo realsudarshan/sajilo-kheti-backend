@@ -1,48 +1,23 @@
 import { TRPCError } from '@trpc/server';
-import { acceptApplicationInputSchema, acceptApplicationResponseSchema, getAllApplicationsInputSchema, getAllApplicationsResponseSchema, getApplicationByIdInputSchema, getApplicationByIdResponseSchema, payEscrowInputSchema, payEscrowResponseSchema, rejectApplicationInputSchema, rejectApplicationResponseSchema, requestedLeaseInputSchema, requestedLeaseResponseSchema, verifyMalpotPapersInputSchema, verifyMalpotPapersResponseSchema } from '../../models/lease.models.js';
-import { publicProcedure, router } from '../../trpc.js';
-// Submitapplication, AcceptApplication, RejectApplication, GetAllApplications, GetApplicationByApplicationId
+import { acceptApplicationInputSchema, acceptApplicationResponseSchema, getAllApplicationsInputSchema, getAllApplicationsResponseSchema, getApplicationByIdInputSchema, getApplicationByIdResponseSchema, rejectApplicationInputSchema, rejectApplicationResponseSchema, requestedLeaseInputSchema, requestedLeaseResponseSchema } from '../../models/lease.models.js';
+import { adminProcedure, leaserProcedure, ownerProcedure, protectedProcedure, router } from '../../trpc.js';
 export const leaseRouter = router({
-    Submitapplication: publicProcedure.meta({
-        openapi: {
-            method: 'POST',
-            path: '/lease/submit-application',
-            description: 'Submit a lease application',
-        },
-    })
+    /**
+     * STEP 1: LEASER SUBMITS APPLICATION
+     * Only accessible by users with 'LEASER' role.
+     */
+    Submitapplication: leaserProcedure
+        .meta({ openapi: { method: 'POST', path: '/lease/submit-application', description: 'Submit a lease application' } })
         .input(requestedLeaseInputSchema)
         .output(requestedLeaseResponseSchema)
         .mutation(async ({ ctx, input }) => {
-        // Verify that the land exists and is available
-        const land = await ctx.prisma.land.findUnique({
-            where: { id: input.landId },
-        });
-        if (!land) {
-            throw new TRPCError({
-                code: 'NOT_FOUND',
-                message: 'Land not found'
-            });
+        const land = await ctx.prisma.land.findUnique({ where: { id: input.landId } });
+        if (!land || land.status !== 'AVAILABLE') {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Land is not available' });
         }
-        if (land.status !== 'AVAILABLE') {
-            throw new TRPCError({
-                code: 'BAD_REQUEST',
-                message: 'Land is not available for lease applications'
-            });
-        }
-        // Verify that the leaser exists
-        const leaser = await ctx.prisma.user.findUnique({
-            where: { id: input.leaserId },
-        });
-        if (!leaser) {
-            throw new TRPCError({
-                code: 'NOT_FOUND',
-                message: 'Leaser not found'
-            });
-        }
-        // Create the lease application
         const leaseApplication = await ctx.prisma.application.create({
             data: {
-                leaserId: input.leaserId,
+                leaserId: ctx.user.id, // Secure: use verified ID from token
                 landId: input.landId,
                 leaseDurationInMonths: input.leaseDurationInMonths,
                 proposedMonthlyRent: input.proposedMonthlyRent,
@@ -50,64 +25,52 @@ export const leaseRouter = router({
                 additionalMessages: input.additionalMessages ?? null,
             },
         });
-        // Land remains AVAILABLE until application is accepted
         return {
             leaseAgreementId: leaseApplication.id,
-            leaserId: input.leaserId,
-            landId: input.landId,
-            leaseDurationInMonths: input.leaseDurationInMonths,
-            proposedMonthlyRent: input.proposedMonthlyRent,
+            leaserId: leaseApplication.leaserId,
+            landId: leaseApplication.landId,
+            leaseDurationInMonths: leaseApplication.leaseDurationInMonths,
+            proposedMonthlyRent: leaseApplication.proposedMonthlyRent,
         };
     }),
-    AcceptApplication: publicProcedure.meta({
-        openapi: {
-            method: 'POST',
-            path: '/lease/accept-application',
-            description: 'Accept a lease application',
-        },
-    })
+    /**
+     * STEP 2: OWNER ACCEPTS APPLICATION
+     * Only accessible by users with 'OWNER' role.
+     */
+    AcceptApplication: ownerProcedure
+        .meta({ openapi: { method: 'POST', path: '/lease/accept-application', description: 'Accept a lease application' } })
         .input(acceptApplicationInputSchema)
         .output(acceptApplicationResponseSchema)
         .mutation(async ({ ctx, input }) => {
-        // Find the application
         const application = await ctx.prisma.application.findUnique({
             where: { id: input.applicationId },
-            include: {
-                land: true,
-            },
+            include: { land: true },
         });
-        if (!application) {
-            throw new TRPCError({
-                code: 'NOT_FOUND',
-                message: 'Application not found'
-            });
+        if (!application)
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'Application not found' });
+        // Security: Ensure the user owns the land associated with this application
+        if (application.land.ownerId !== ctx.user.id) {
+            throw new TRPCError({ code: 'FORBIDDEN', message: 'You do not own this land listing' });
         }
-        if (application.status !== 'PENDING') {
-            throw new TRPCError({
-                code: 'BAD_REQUEST',
-                message: `Application is already ${application.status.toLowerCase()}`
-            });
-        }
-        // Update application status to ACCEPTED
         const updatedApplication = await ctx.prisma.application.update({
             where: { id: input.applicationId },
             data: { status: 'ACCEPTED' },
         });
-        // Update land status to IN_NEGOTIATION
-        // NOTE: This reserves the land. Chat and meeting will only happen AFTER Escrow Payment (Step 3).
-        await ctx.prisma.land.update({
-            where: { id: application.landId },
-            data: { status: 'IN_NEGOTIATION' },
-        });
-        // Reject all other pending applications for this land
-        await ctx.prisma.application.updateMany({
-            where: {
-                landId: application.landId,
-                id: { not: input.applicationId },
-                status: 'PENDING',
-            },
-            data: { status: 'REJECTED' },
-        });
+        // Update land to 'IN_NEGOTIATION' and reject all other pending apps
+        await ctx.prisma.$transaction([
+            ctx.prisma.land.update({
+                where: { id: application.landId },
+                data: { status: 'IN_NEGOTIATION' },
+            }),
+            ctx.prisma.application.updateMany({
+                where: {
+                    landId: application.landId,
+                    id: { not: input.applicationId },
+                    status: 'PENDING',
+                },
+                data: { status: 'REJECTED' },
+            }),
+        ]);
         return {
             success: true,
             message: 'Application accepted successfully',
@@ -119,274 +82,102 @@ export const leaseRouter = router({
             },
         };
     }),
-    RejectApplication: publicProcedure.meta({
-        openapi: {
-            method: 'POST',
-            path: '/lease/reject-application',
-            description: 'Reject a lease application',
-        },
-    })
+    /**
+     * STEP 2b: OWNER REJECTS APPLICATION
+     */
+    RejectApplication: ownerProcedure
+        .meta({ openapi: { method: 'POST', path: '/lease/reject-application', description: 'Reject a lease application' } })
         .input(rejectApplicationInputSchema)
         .output(rejectApplicationResponseSchema)
         .mutation(async ({ ctx, input }) => {
-        // Find the application
         const application = await ctx.prisma.application.findUnique({
             where: { id: input.applicationId },
-            include: {
-                land: true,
-            },
+            include: { land: true },
         });
-        if (!application) {
-            throw new TRPCError({
-                code: 'NOT_FOUND',
-                message: 'Application not found'
-            });
+        if (!application || application.land.ownerId !== ctx.user.id) {
+            throw new TRPCError({ code: 'FORBIDDEN', message: 'Unauthorized action' });
         }
-        if (application.status !== 'PENDING') {
-            throw new TRPCError({
-                code: 'BAD_REQUEST',
-                message: `Application is already ${application.status.toLowerCase()}`
-            });
-        }
-        // Update application status to REJECTED
         const updatedApplication = await ctx.prisma.application.update({
             where: { id: input.applicationId },
             data: { status: 'REJECTED' },
         });
-        // Check if there are any other pending applications for this land
-        const otherPendingApplications = await ctx.prisma.application.findMany({
-            where: {
-                landId: application.landId,
-                status: 'PENDING',
-            },
-        });
-        // If no other pending applications, set land status back to AVAILABLE
-        // if (otherPendingApplications.length === 0) {
-        //   await ctx.prisma.land.update({
-        //     where: { id: application.landId },
-        //     data: { status: 'AVAILABLE' },
-        //   });
-        // }
         return {
             success: true,
-            message: input.reason
-                ? `Application rejected: ${input.reason}`
-                : 'Application rejected successfully',
-            application: {
-                id: updatedApplication.id,
-                status: updatedApplication.status,
-            },
+            message: input.reason ? `Rejected: ${input.reason}` : 'Rejected successfully',
+            application: { id: updatedApplication.id, status: updatedApplication.status },
         };
     }),
-    GetApplicationById: publicProcedure.meta({
-        openapi: {
-            method: 'GET',
-            path: '/lease/application/{applicationId}',
-            description: 'Get a lease application by ID',
-        },
-    })
+    /**
+     * STEP 3: LEASER PAYS ESCROW
+     * This procedure verifies the Khalti/eSewa transaction and locks the funds.
+     */
+    // PayEscrow: leaserProcedure
+    //   .meta({ openapi: { method: 'POST', path: '/lease/pay-escrow', description: 'Pay the initial escrow amount' } })
+    //   .input(payEscrowInputSchema)
+    //   .output(payEscrowResponseSchema)
+    //   .mutation(async ({ ctx, input }) => {
+    //     const application = await ctx.prisma.application.findUnique({
+    //       where: { id: input.applicationId },
+    //     });
+    //     if (!application || application.leaserId !== ctx.user.id) {
+    //       throw new TRPCError({ code: 'FORBIDDEN', message: 'You can only pay for your own applications' });
+    //     }
+    //     // In a real app, you would verify the pidx (Khalti) or transaction_uuid (eSewa) here via Axios.
+    //     const escrow = await ctx.prisma.escrow.create({
+    //       data: {
+    //         applicationId: input.applicationId,
+    //         amount: input.amount,
+    //         status: 'HELD', // Funds are now safely held by the system
+    //         transactionId: input.transactionId,
+    //       },
+    //     });
+    //     return { success: true, escrowId: escrow.id, status: escrow.status };
+    //   }),
+    /**
+     * STEP 4: ADMIN VERIFIES MALPOT PAPERS
+     * Final step to release funds to owner and mark land as LEASED.
+     */
+    /**
+     * DATA QUERIES
+     */
+    GetApplicationById: protectedProcedure
+        .meta({ openapi: { method: 'GET', path: '/lease/application/{applicationId}', description: 'Get a lease application by ID' } })
         .input(getApplicationByIdInputSchema)
         .output(getApplicationByIdResponseSchema)
         .query(async ({ ctx, input }) => {
         const application = await ctx.prisma.application.findUnique({
             where: { id: input.applicationId },
-            include: {
-                land: {
-                    select: {
-                        title: true,
-                        location: true,
-                        area: true,
-                        pricePerMonth: true,
-                    },
-                },
-                leaser: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        phone: true,
-                    },
-                },
-            },
+            include: { land: true, leaser: true },
         });
-        if (!application) {
-            throw new TRPCError({
-                code: 'NOT_FOUND',
-                message: 'Application not found'
-            });
+        if (!application)
+            throw new TRPCError({ code: 'NOT_FOUND' });
+        // Security: Check if user is either the leaser, the owner, or an admin
+        const isLeaser = application.leaserId === ctx.user.id;
+        const isOwner = application.land.ownerId === ctx.user.id;
+        const isAdmin = ctx.user.role === 'ADMIN';
+        if (!isLeaser && !isOwner && !isAdmin) {
+            throw new TRPCError({ code: 'FORBIDDEN', message: 'You are not a party to this application' });
         }
-        return {
-            id: application.id,
-            landId: application.landId,
-            leaserId: application.leaserId,
-            plans: application.plans,
-            leaseDurationInMonths: application.leaseDurationInMonths,
-            proposedMonthlyRent: application.proposedMonthlyRent,
-            status: application.status,
-            additionalMessages: application.additionalMessages,
-            createdAt: application.createdAt,
-            land: application.land,
-            leaser: application.leaser,
-        };
+        return application;
     }),
-    GetAllApplications: publicProcedure.meta({
-        openapi: {
-            method: 'GET',
-            path: '/lease/applications',
-            description: 'Get all lease applications with optional filters',
-        },
-    })
+    GetAllApplications: adminProcedure
+        .meta({ openapi: { method: 'GET', path: '/lease/applications', description: 'Get all lease applications' } })
         .input(getAllApplicationsInputSchema)
         .output(getAllApplicationsResponseSchema)
         .query(async ({ ctx, input }) => {
-        // Build the where clause based on filters
         const whereClause = {};
-        if (input.status) {
+        if (input.status)
             whereClause.status = input.status;
-        }
-        if (input.landId) {
+        if (input.landId)
             whereClause.landId = input.landId;
-        }
-        if (input.leaserId) {
+        if (input.leaserId)
             whereClause.leaserId = input.leaserId;
-        }
-        // Fetch applications with related data
         const applications = await ctx.prisma.application.findMany({
             where: whereClause,
-            include: {
-                land: {
-                    select: {
-                        title: true,
-                        location: true,
-                        area: true,
-                        pricePerMonth: true,
-                    },
-                },
-                leaser: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        phone: true,
-                    },
-                },
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
+            include: { land: true, leaser: true },
+            orderBy: { createdAt: 'desc' },
         });
-        return {
-            applications: applications.map(app => ({
-                id: app.id,
-                landId: app.landId,
-                leaserId: app.leaserId,
-                plans: app.plans,
-                leaseDurationInMonths: app.leaseDurationInMonths,
-                proposedMonthlyRent: app.proposedMonthlyRent,
-                status: app.status,
-                additionalMessages: app.additionalMessages,
-                createdAt: app.createdAt,
-                land: app.land,
-                leaser: app.leaser,
-            })),
-            total: applications.length,
-        };
-    }),
-    // Step 3: Leaser pays Escrow - Land status changes to IN_NEGOTIATION
-    // Step 4: Admin verifies Malpot papers - Land becomes LEASED, Application COMPLETED
-    VerifyMalpotPapers: publicProcedure.meta({
-        openapi: {
-            method: 'POST',
-            path: '/lease/verify-malpot-papers',
-            description: 'Admin verifies the Malpot agreement papers',
-        },
-    })
-        .input(verifyMalpotPapersInputSchema)
-        .output(verifyMalpotPapersResponseSchema)
-        .mutation(async ({ ctx, input }) => {
-        // Find the application
-        const application = await ctx.prisma.application.findUnique({
-            where: { id: input.applicationId },
-            include: {
-                land: true,
-                escrow: true,
-                agreement: true,
-            },
-        });
-        if (!application) {
-            throw new TRPCError({
-                code: 'NOT_FOUND',
-                message: 'Application not found'
-            });
-        }
-        if (application.status !== 'ACCEPTED') {
-            throw new TRPCError({
-                code: 'BAD_REQUEST',
-                message: 'Application must be ACCEPTED to verify papers'
-            });
-        }
-        if (!application.escrow) {
-            throw new TRPCError({
-                code: 'BAD_REQUEST',
-                message: 'Escrow payment not found. Payment must be made before verification.'
-            });
-        }
-        if (application.land.status !== 'IN_NEGOTIATION') {
-            throw new TRPCError({
-                code: 'BAD_REQUEST',
-                message: 'Land must be in IN_NEGOTIATION status'
-            });
-        }
-        // Verify admin exists
-        const admin = await ctx.prisma.user.findUnique({
-            where: { id: input.adminId },
-        });
-        if (!admin || admin.role !== 'ADMIN') {
-            throw new TRPCError({
-                code: 'FORBIDDEN',
-                message: 'Only admins can verify Malpot papers'
-            });
-        }
-        // Create or update lease agreement
-        const leaseAgreement = await ctx.prisma.leaseAgreement.upsert({
-            where: { applicationId: input.applicationId },
-            create: {
-                applicationId: input.applicationId,
-                malpotPaperUrl: input.malpotPaperUrl,
-                adminVerified: true,
-                verifiedAt: new Date(),
-            },
-            update: {
-                malpotPaperUrl: input.malpotPaperUrl,
-                adminVerified: true,
-                verifiedAt: new Date(),
-            },
-        });
-        // Update application status to COMPLETED
-        const updatedApplication = await ctx.prisma.application.update({
-            where: { id: input.applicationId },
-            data: { status: 'COMPLETED' },
-        });
-        // Update land status to LEASED
-        const updatedLand = await ctx.prisma.land.update({
-            where: { id: application.landId },
-            data: { status: 'LEASED' },
-        });
-        // Release escrow funds
-        const updatedEscrow = await ctx.prisma.escrow.update({
-            where: { id: application.escrow.id },
-            data: { status: 'RELEASED' },
-        });
-        return {
-            success: true,
-            message: 'Malpot papers verified successfully. Escrow funds released to land owner.',
-            application: {
-                id: updatedApplication.id,
-                status: updatedApplication.status,
-            },
-            landStatus: updatedLand.status,
-            escrowStatus: updatedEscrow.status,
-        };
+        return { applications, total: applications.length };
     }),
 });
 //# sourceMappingURL=lease.routes.js.map

@@ -24,8 +24,8 @@ export declare const acceptApplicationResponseSchema: z.ZodObject<{
         id: z.ZodString;
         status: z.ZodEnum<{
             PENDING: "PENDING";
-            REJECTED: "REJECTED";
             ACCEPTED: "ACCEPTED";
+            REJECTED: "REJECTED";
             COMPLETED: "COMPLETED";
         }>;
         leaserId: z.ZodString;
@@ -43,8 +43,8 @@ export declare const rejectApplicationResponseSchema: z.ZodObject<{
         id: z.ZodString;
         status: z.ZodEnum<{
             PENDING: "PENDING";
-            REJECTED: "REJECTED";
             ACCEPTED: "ACCEPTED";
+            REJECTED: "REJECTED";
             COMPLETED: "COMPLETED";
         }>;
     }, z.core.$strip>;
@@ -61,8 +61,8 @@ export declare const getApplicationByIdResponseSchema: z.ZodObject<{
     proposedMonthlyRent: z.ZodNumber;
     status: z.ZodEnum<{
         PENDING: "PENDING";
-        REJECTED: "REJECTED";
         ACCEPTED: "ACCEPTED";
+        REJECTED: "REJECTED";
         COMPLETED: "COMPLETED";
     }>;
     additionalMessages: z.ZodNullable<z.ZodString>;
@@ -83,8 +83,8 @@ export declare const getApplicationByIdResponseSchema: z.ZodObject<{
 export declare const getAllApplicationsInputSchema: z.ZodObject<{
     status: z.ZodOptional<z.ZodEnum<{
         PENDING: "PENDING";
-        REJECTED: "REJECTED";
         ACCEPTED: "ACCEPTED";
+        REJECTED: "REJECTED";
         COMPLETED: "COMPLETED";
     }>>;
     landId: z.ZodOptional<z.ZodString>;
@@ -100,8 +100,8 @@ export declare const getAllApplicationsResponseSchema: z.ZodObject<{
         proposedMonthlyRent: z.ZodNumber;
         status: z.ZodEnum<{
             PENDING: "PENDING";
-            REJECTED: "REJECTED";
             ACCEPTED: "ACCEPTED";
+            REJECTED: "REJECTED";
             COMPLETED: "COMPLETED";
         }>;
         additionalMessages: z.ZodNullable<z.ZodString>;
@@ -120,60 +120,5 @@ export declare const getAllApplicationsResponseSchema: z.ZodObject<{
         }, z.core.$strip>>;
     }, z.core.$strip>>;
     total: z.ZodNumber;
-}, z.core.$strip>;
-export declare const payEscrowInputSchema: z.ZodObject<{
-    applicationId: z.ZodString;
-    amount: z.ZodNumber;
-    paymentId: z.ZodString;
-    commission: z.ZodNumber;
-}, z.core.$strip>;
-export declare const payEscrowResponseSchema: z.ZodObject<{
-    success: z.ZodBoolean;
-    message: z.ZodString;
-    escrow: z.ZodObject<{
-        id: z.ZodString;
-        applicationId: z.ZodString;
-        amount: z.ZodNumber;
-        status: z.ZodEnum<{
-            HOLDING: "HOLDING";
-            RELEASED: "RELEASED";
-            REFUNDED: "REFUNDED";
-        }>;
-    }, z.core.$strip>;
-    landStatus: z.ZodEnum<{
-        AVAILABLE: "AVAILABLE";
-        IN_NEGOTIATION: "IN_NEGOTIATION";
-        LEASED: "LEASED";
-        HIDDEN: "HIDDEN";
-    }>;
-}, z.core.$strip>;
-export declare const verifyMalpotPapersInputSchema: z.ZodObject<{
-    applicationId: z.ZodString;
-    malpotPaperUrl: z.ZodString;
-    adminId: z.ZodString;
-}, z.core.$strip>;
-export declare const verifyMalpotPapersResponseSchema: z.ZodObject<{
-    success: z.ZodBoolean;
-    message: z.ZodString;
-    application: z.ZodObject<{
-        id: z.ZodString;
-        status: z.ZodEnum<{
-            PENDING: "PENDING";
-            REJECTED: "REJECTED";
-            ACCEPTED: "ACCEPTED";
-            COMPLETED: "COMPLETED";
-        }>;
-    }, z.core.$strip>;
-    landStatus: z.ZodEnum<{
-        AVAILABLE: "AVAILABLE";
-        IN_NEGOTIATION: "IN_NEGOTIATION";
-        LEASED: "LEASED";
-        HIDDEN: "HIDDEN";
-    }>;
-    escrowStatus: z.ZodEnum<{
-        HOLDING: "HOLDING";
-        RELEASED: "RELEASED";
-        REFUNDED: "REFUNDED";
-    }>;
 }, z.core.$strip>;
 //# sourceMappingURL=lease.models.d.ts.map

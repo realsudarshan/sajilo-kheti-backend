@@ -100,38 +100,4 @@ export const getAllApplicationsResponseSchema = z.object({
     })),
     total: z.number(),
 });
-// Pay Escrow Schemas (Step 3)
-export const payEscrowInputSchema = z.object({
-    applicationId: z.string(),
-    amount: z.number().positive('Escrow amount must be positive'),
-    paymentId: z.string(), // Reference from Khalti/eSewa
-    commission: z.number().positive('Commission must be positive'),
-});
-export const payEscrowResponseSchema = z.object({
-    success: z.boolean(),
-    message: z.string(),
-    escrow: z.object({
-        id: z.string(),
-        applicationId: z.string(),
-        amount: z.number(),
-        status: z.enum(['HOLDING', 'RELEASED', 'REFUNDED']),
-    }),
-    landStatus: z.enum(['AVAILABLE', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']),
-});
-// Verify Malpot Papers Schemas (Step 4)
-export const verifyMalpotPapersInputSchema = z.object({
-    applicationId: z.string(),
-    malpotPaperUrl: z.string().url('Must be a valid URL'),
-    adminId: z.string(), // Admin who is verifying
-});
-export const verifyMalpotPapersResponseSchema = z.object({
-    success: z.boolean(),
-    message: z.string(),
-    application: z.object({
-        id: z.string(),
-        status: z.enum(['PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED']),
-    }),
-    landStatus: z.enum(['AVAILABLE', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']),
-    escrowStatus: z.enum(['HOLDING', 'RELEASED', 'REFUNDED']),
-});
 //# sourceMappingURL=lease.models.js.map

@@ -2,10 +2,17 @@ import { initTRPC, TRPCError } from '@trpc/server';
 import type { Context } from './context.js';
 import { z } from 'zod';
 
-const t = initTRPC.context<Context>().create();
+import type { OpenApiMeta } from 'trpc-to-openapi';
+
+const t = initTRPC.context<Context>().meta<OpenApiMeta>().create();
 
 export const router = t.router;
 export const publicProcedure = t.procedure;
+
+
+
+
+
 
 // 1. The PROTECTED procedure that "fixes" the null error
 const isAuthed = t.middleware(({ ctx, next }) => {

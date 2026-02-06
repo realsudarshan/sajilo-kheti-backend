@@ -5,7 +5,7 @@ import { createOpenApiExpressMiddleware, generateOpenApiDocument } from 'trpc-to
 import { clerkMiddleware } from '@clerk/express';
 import { appRouter } from './server/index.js';
 import { createContext } from './server/context.js';
-
+import fs from 'fs/promises';
 const app = express();
 app.use(express.json());
 
@@ -38,3 +38,4 @@ app.listen(8000, () => {
   console.log('🚀 Server running on http://localhost:8000');
   console.log('📖 Swagger docs at http://localhost:8000/docs');
 });
+
