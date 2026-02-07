@@ -12,11 +12,13 @@ export const UserSchema = z.object({
 });
 
 export const getAllUsersResponseSchema = z.object({
-  users: z.array(UserSchema),
-  // Fields from Clerk
-  email: z.string().optional(),
-  name: z.string().optional(),
-  imageUrl: z.string().optional(),
+  users: z.array(
+    UserSchema.extend({
+      email: z.string(),
+      name: z.string(),
+      imageUrl: z.string().optional(),
+    })
+  ),
 });
 
 export const createUserInputSchema = z.object({

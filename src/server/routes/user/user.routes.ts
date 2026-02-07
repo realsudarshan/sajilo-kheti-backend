@@ -1,3 +1,4 @@
+import { clerkClient } from '@clerk/express';
 import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import {
@@ -15,7 +16,6 @@ import {
   publicProcedure,
   router,
 } from '../../trpc.js';
-import { clerkClient } from '@clerk/express';
 
 export const userRouter = router({
   getAllUser: adminProcedure
@@ -34,7 +34,7 @@ export const userRouter = router({
       });
       const hydratedUsers = users.map((dbUser) => {
         const clerkInfo = clerkUsers.data.find((cu) => cu.id === dbUser.id);
-        
+
         return {
           ...dbUser,
           // Extract specific fields from Clerk
@@ -46,14 +46,14 @@ export const userRouter = router({
 
       return { users: hydratedUsers };
     }),
-    
+
   createUser: publicProcedure
     .input(createUserInputSchema)
     .output(createUserResponseSchema)
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.user.upsert({
         where: { id: input.id },
-        update: {}, 
+        update: {},
         create: {
           id: input.id,
           role: 'LEASER',
@@ -117,5 +117,52 @@ export const userRouter = router({
           isKycVerified: updatedUser.isKycVerified,
         };
       });
+    }),
+  getKycDetails: protectedProcedure
+    .query(async ({ ctx }) => {
+      const kyc = await ctx.prisma.kycDetail.findUnique({
+        where: { userId: ctx.user.id },
+      });
+
+      if (!kyc) {
+        // We return null instead of throwing an error so the frontend 
+        // can easily check "if (!data) showUploadForm()"
+        return null;
+      }
+
+      return kyc;
+    }),
+
+  getAllKycDetails: adminProcedure
+    .query(async ({ ctx }) => {
+      const kycDetails = await ctx.prisma.kycDetail.findMany({
+        include: {
+          user: {
+            select: {
+              id: true,
+              role: true,
+              isKycVerified: true,
+            },
+          },
+        },
+      });
+
+      // Hydrate with Clerk data
+      const userIds = kycDetails.map(kyc => kyc.userId);
+      const clerkUsers = await clerkClient.users.getUserList({
+        userId: userIds,
+      });
+
+      const hydratedKycDetails = kycDetails.map((kyc) => {
+        const clerkInfo = clerkUsers.data.find((cu) => cu.id === kyc.userId);
+
+        return {
+          ...kyc,
+          userName: `${clerkInfo?.firstName ?? ''} ${clerkInfo?.lastName ?? ''}`.trim() || 'Unnamed',
+          userEmail: clerkInfo?.emailAddresses[0]?.emailAddress ?? 'No email',
+        };
+      });
+
+      return { kycDetails: hydratedKycDetails };
     }),
 });

@@ -29,10 +29,10 @@ export declare const getAllUsersResponseSchema: z.ZodObject<{
         }>;
         isKycVerified: z.ZodBoolean;
         createdAt: z.ZodDate;
+        email: z.ZodString;
+        name: z.ZodString;
+        imageUrl: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>>;
-    email: z.ZodOptional<z.ZodString>;
-    name: z.ZodOptional<z.ZodString>;
-    imageUrl: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
 export declare const createUserInputSchema: z.ZodObject<{
     id: z.ZodString;

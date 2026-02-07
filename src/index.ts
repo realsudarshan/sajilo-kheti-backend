@@ -5,8 +5,15 @@ import { createOpenApiExpressMiddleware, generateOpenApiDocument } from 'trpc-to
 import { clerkMiddleware } from '@clerk/express';
 import { appRouter } from './server/index.js';
 import { createContext } from './server/context.js';
+import morgan from 'morgan';
 import fs from 'fs/promises';
+import cors from 'cors';
 const app = express();
+app.use(morgan('dev'));
+app.use(cors({
+  origin: 'http://localhost:3000', // Your Next.js URL
+  credentials: true,
+}));
 app.use(express.json());
 
 // Clerk middleware MUST be before trpc/openapi

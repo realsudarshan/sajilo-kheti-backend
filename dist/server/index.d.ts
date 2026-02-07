@@ -32,10 +32,10 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     role: "LEASER" | "OWNER" | "ADMIN";
                     isKycVerified: boolean;
                     createdAt: Date;
+                    email: string;
+                    name: string;
+                    imageUrl?: string | undefined;
                 }[];
-                email?: string | undefined;
-                name?: string | undefined;
-                imageUrl?: string | undefined;
             };
             meta: import("trpc-to-openapi").OpenApiMeta;
         }>;
@@ -77,6 +77,39 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 kycStatus: string;
                 userRole: "LEASER" | "OWNER" | "ADMIN";
                 isKycVerified: boolean;
+            };
+            meta: import("trpc-to-openapi").OpenApiMeta;
+        }>;
+        getKycDetails: import("@trpc/server").TRPCQueryProcedure<{
+            input: void;
+            output: {
+                id: string;
+                status: string;
+                userId: string;
+                citizenshipNumber: string;
+                documentUrl: string;
+                selfieUrl: string | null;
+            } | null;
+            meta: import("trpc-to-openapi").OpenApiMeta;
+        }>;
+        getAllKycDetails: import("@trpc/server").TRPCQueryProcedure<{
+            input: void;
+            output: {
+                kycDetails: {
+                    userName: string;
+                    userEmail: string;
+                    user: {
+                        id: string;
+                        role: import("@prisma/client").$Enums.UserRole;
+                        isKycVerified: boolean;
+                    };
+                    id: string;
+                    status: string;
+                    userId: string;
+                    citizenshipNumber: string;
+                    documentUrl: string;
+                    selfieUrl: string | null;
+                }[];
             };
             meta: import("trpc-to-openapi").OpenApiMeta;
         }>;

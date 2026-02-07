@@ -1,7 +1,7 @@
+import { clerkClient } from '@clerk/express';
 import { TRPCError } from '@trpc/server';
 import { createUserInputSchema, createUserResponseSchema, getAllUsersResponseSchema, updateKycStatusInputSchema, updateKycStatusResponseSchema, upgradeRequestInputSchema, upgradeRequestResponseSchema, } from '../../models/user.models.js';
 import { adminProcedure, protectedProcedure, publicProcedure, router, } from '../../trpc.js';
-import { clerkClient } from '@clerk/express';
 export const userRouter = router({
     getAllUser: adminProcedure
         .output(getAllUsersResponseSchema)
@@ -93,6 +93,46 @@ export const userRouter = router({
                 isKycVerified: updatedUser.isKycVerified,
             };
         });
+    }),
+    getKycDetails: protectedProcedure
+        .query(async ({ ctx }) => {
+        const kyc = await ctx.prisma.kycDetail.findUnique({
+            where: { userId: ctx.user.id },
+        });
+        if (!kyc) {
+            // We return null instead of throwing an error so the frontend 
+            // can easily check "if (!data) showUploadForm()"
+            return null;
+        }
+        return kyc;
+    }),
+    getAllKycDetails: adminProcedure
+        .query(async ({ ctx }) => {
+        const kycDetails = await ctx.prisma.kycDetail.findMany({
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        role: true,
+                        isKycVerified: true,
+                    },
+                },
+            },
+        });
+        // Hydrate with Clerk data
+        const userIds = kycDetails.map(kyc => kyc.userId);
+        const clerkUsers = await clerkClient.users.getUserList({
+            userId: userIds,
+        });
+        const hydratedKycDetails = kycDetails.map((kyc) => {
+            const clerkInfo = clerkUsers.data.find((cu) => cu.id === kyc.userId);
+            return {
+                ...kyc,
+                userName: `${clerkInfo?.firstName ?? ''} ${clerkInfo?.lastName ?? ''}`.trim() || 'Unnamed',
+                userEmail: clerkInfo?.emailAddresses[0]?.emailAddress ?? 'No email',
+            };
+        });
+        return { kycDetails: hydratedKycDetails };
     }),
 });
 //# sourceMappingURL=user.routes.js.map
