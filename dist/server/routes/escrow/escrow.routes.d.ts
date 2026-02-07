@@ -11,6 +11,9 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
     errorShape: import("@trpc/server").TRPCDefaultErrorShape;
     transformer: false;
 }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+    /**
+     * STEP 3: PAY ESCROW
+     */
     PayEscrow: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             applicationId: string;
@@ -31,6 +34,9 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
+    /**
+     * STEP 4: VERIFY MALPOT PAPERS
+     */
     VerifyMalpotPapers: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             applicationId: string;

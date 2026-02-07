@@ -1,47 +1,34 @@
 import { z } from 'zod';
 
 export const UserRoleSchema = z.enum(['LEASER', 'OWNER', 'ADMIN']);
+export const KycStatusSchema = z.enum(['PENDING', 'APPROVED', 'REJECTED']);
 
+// This matches exactly what is in your MongoDB
 export const UserSchema = z.object({
   id: z.string(),
-  name: z.string().nullable(),
-  email: z.string().email(),
-  phone: z.string().nullable(),
-  role: z.string(),
+  role: UserRoleSchema,
+  isKycVerified: z.boolean(),
   createdAt: z.date(),
 });
-export type User = z.infer<typeof UserSchema>;
 
 export const getAllUsersResponseSchema = z.object({
   users: z.array(UserSchema),
+  // Fields from Clerk
+  email: z.string().optional(),
+  name: z.string().optional(),
+  imageUrl: z.string().optional(),
 });
-
-const clerkIdSchema = z.string().min(1, 'Clerk ID is required');
 
 export const createUserInputSchema = z.object({
-  id: clerkIdSchema, // Clerk ID from frontend - primary key
-  email: z.string().email(),
-  password: z.string().min(6),
-  name: z.string().optional(),
-  phone: z.string().optional(),
-  role: UserRoleSchema.optional(),
+  id: z.string().min(1),
 });
 
-export const createUserResponseSchema = z.object({
-  id: z.string(),
-  email: z.string(),
-  name: z.string().nullable(),
-  phone: z.string().nullable(),
-  role: z.string(),
-  createdAt: z.date(),
-});
+export const createUserResponseSchema = UserSchema;
 
-// KYC / Upgrade to Land Owner
 export const upgradeRequestInputSchema = z.object({
-  userId: clerkIdSchema, // Clerk ID of the requesting user
-  citizenshipNumber: z.string().min(1, 'Citizenship number is required'),
-  documentUrl: z.string().url('Invalid document URL'),
-  selfieUrl: z.string().url('Invalid selfie URL').optional(),
+  citizenshipNumber: z.string().min(1),
+  documentUrl: z.string().url(),
+  selfieUrl: z.string().url().optional(),
 });
 
 export const upgradeRequestResponseSchema = z.object({
@@ -53,17 +40,14 @@ export const upgradeRequestResponseSchema = z.object({
   selfieUrl: z.string().nullable(),
 });
 
-export const KycStatusSchema = z.enum(['PENDING', 'APPROVED', 'REJECTED']);
-
 export const updateKycStatusInputSchema = z.object({
-  userId: clerkIdSchema, // Clerk ID of the user whose KYC to approve/reject
+  userId: z.string(),
   status: KycStatusSchema,
 });
 
 export const updateKycStatusResponseSchema = z.object({
   userId: z.string(),
   kycStatus: z.string(),
-  userRole: z.string(),
+  userRole: UserRoleSchema,
   isKycVerified: z.boolean(),
 });
-

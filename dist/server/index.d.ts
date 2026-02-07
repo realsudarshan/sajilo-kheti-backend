@@ -29,30 +29,24 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             output: {
                 users: {
                     id: string;
-                    name: string | null;
-                    email: string;
-                    phone: string | null;
-                    role: string;
+                    role: "LEASER" | "OWNER" | "ADMIN";
+                    isKycVerified: boolean;
                     createdAt: Date;
                 }[];
+                email?: string | undefined;
+                name?: string | undefined;
+                imageUrl?: string | undefined;
             };
             meta: import("trpc-to-openapi").OpenApiMeta;
         }>;
         createUser: import("@trpc/server").TRPCMutationProcedure<{
             input: {
                 id: string;
-                email: string;
-                password: string;
-                name?: string | undefined;
-                phone?: string | undefined;
-                role?: "LEASER" | "OWNER" | "ADMIN" | undefined;
             };
             output: {
                 id: string;
-                email: string;
-                name: string | null;
-                phone: string | null;
-                role: string;
+                role: "LEASER" | "OWNER" | "ADMIN";
+                isKycVerified: boolean;
                 createdAt: Date;
             };
             meta: import("trpc-to-openapi").OpenApiMeta;
@@ -81,7 +75,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             output: {
                 userId: string;
                 kycStatus: string;
-                userRole: string;
+                userRole: "LEASER" | "OWNER" | "ADMIN";
                 isKycVerified: boolean;
             };
             meta: import("trpc-to-openapi").OpenApiMeta;
@@ -103,6 +97,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
         publish: import("@trpc/server").TRPCMutationProcedure<{
             input: {
                 ownerId: string;
+                title: string;
                 location: string;
                 size: {
                     size: number;
@@ -111,21 +106,24 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 price: number;
                 description: string;
                 landpic: string;
-                lalpurjaUrl: string;
                 morelandpic?: string[] | undefined;
-                title?: string | undefined;
+                lalpurjaUrl?: string | undefined;
             };
             output: {
                 id: string;
                 ownerId: string;
+                title: string;
+                description: string;
                 location: string;
+                area: string | null;
                 sizeInSqFt: number;
                 pricePerMonth: number;
-                description: string;
                 heroImageUrl: string;
                 galleryUrls: string[];
-                status: string;
+                lalpurjaUrl: string | null;
+                status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                 createdAt: Date;
+                updatedAt: Date;
             };
             meta: import("trpc-to-openapi").OpenApiMeta;
         }>;
@@ -141,7 +139,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 lands: {
                     id: string;
                     ownerId: string;
-                    title: string | null;
+                    title: string;
                     description: string;
                     location: string;
                     area: string | null;
@@ -149,8 +147,10 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     pricePerMonth: number;
                     heroImageUrl: string;
                     galleryUrls: string[];
-                    status: string;
+                    lalpurjaUrl: string | null;
+                    status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                     createdAt: Date;
+                    updatedAt: Date;
                 }[];
             };
             meta: import("trpc-to-openapi").OpenApiMeta;
@@ -162,7 +162,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             output: {
                 id: string;
                 ownerId: string;
-                title: string | null;
+                title: string;
                 description: string;
                 location: string;
                 area: string | null;
@@ -170,8 +170,10 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 pricePerMonth: number;
                 heroImageUrl: string;
                 galleryUrls: string[];
-                status: string;
+                lalpurjaUrl: string | null;
+                status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                 createdAt: Date;
+                updatedAt: Date;
             };
             meta: import("trpc-to-openapi").OpenApiMeta;
         }>;
@@ -182,7 +184,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             };
             output: {
                 id: string;
-                status: string;
+                status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
             };
             meta: import("trpc-to-openapi").OpenApiMeta;
         }>;
@@ -202,7 +204,6 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
     }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
         Submitapplication: import("@trpc/server").TRPCMutationProcedure<{
             input: {
-                leaserId: string;
                 landId: string;
                 leaseDurationInMonths: number;
                 proposedMonthlyRent: number;
@@ -263,18 +264,30 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
                 additionalMessages: string | null;
                 createdAt: Date;
-                land?: {
-                    title: string | null;
+                land: {
+                    id: string;
+                    ownerId: string;
+                    title: string;
+                    description: string;
                     location: string;
                     area: string | null;
+                    sizeInSqFt: number;
                     pricePerMonth: number;
-                } | undefined;
-                leaser?: {
+                    heroImageUrl: string;
+                    galleryUrls: string[];
+                    lalpurjaUrl: string | null;
+                    status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                    createdAt: Date;
+                    updatedAt: Date;
+                };
+                leaser: {
                     id: string;
                     name: string | null;
-                    email: string;
-                    phone: string | null;
-                } | undefined;
+                    role: "LEASER" | "OWNER" | "ADMIN";
+                    isKycVerified: boolean;
+                    createdAt: Date;
+                    updatedAt: Date;
+                };
             };
             meta: import("trpc-to-openapi").OpenApiMeta;
         }>;
@@ -295,18 +308,30 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
                     additionalMessages: string | null;
                     createdAt: Date;
-                    land?: {
-                        title: string | null;
+                    land: {
+                        id: string;
+                        ownerId: string;
+                        title: string;
+                        description: string;
                         location: string;
                         area: string | null;
+                        sizeInSqFt: number;
                         pricePerMonth: number;
-                    } | undefined;
-                    leaser?: {
+                        heroImageUrl: string;
+                        galleryUrls: string[];
+                        lalpurjaUrl: string | null;
+                        status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                        createdAt: Date;
+                        updatedAt: Date;
+                    };
+                    leaser: {
                         id: string;
                         name: string | null;
-                        email: string;
-                        phone: string | null;
-                    } | undefined;
+                        role: "LEASER" | "OWNER" | "ADMIN";
+                        isKycVerified: boolean;
+                        createdAt: Date;
+                        updatedAt: Date;
+                    };
                 }[];
                 total: number;
             };

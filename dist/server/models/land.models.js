@@ -1,65 +1,19 @@
-import { size, z } from 'zod';
-const clerkIdSchema = z.string().min(1, 'Clerk ID is required');
+import { z } from 'zod';
 export const LandStatusSchema = z.enum(['AVAILABLE', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']);
-//support of different unit of land
 export const LandUnitSchema = z.enum([
-    // Hilly System
-    "ROPANI",
-    "AANA",
-    "PAISA",
-    "DAAM",
-    // Terai System
-    "BIGHA",
-    "KATTHA",
-    "DHUR",
-    // Metric/Imperial
-    "SQ_FT",
-    "SQ_MTR"
+    "ROPANI", "AANA", "PAISA", "DAAM",
+    "BIGHA", "KATTHA", "DHUR",
+    "SQ_FT", "SQ_MTR"
 ]);
 export const LandSizeSchema = z.object({
     size: z.number().positive("Size must be a positive number"),
     unit: LandUnitSchema,
 });
-// POST /land/publish
-export const publishLandInputSchema = z.object({
-    ownerId: clerkIdSchema,
-    location: z.string().min(1, 'Location is required'),
-    size: LandSizeSchema,
-    price: z.number().positive('Price must be positive'),
-    description: z.string().min(1, 'Description is required'),
-    landpic: z.string().url('Invalid hero image URL'),
-    morelandpic: z
-        .array(z.string().url('Invalid gallery image URL'))
-        .max(5, 'Maximum 5 gallery images allowed')
-        .optional()
-        .default([]),
-    title: z.string().optional(),
-    lalpurjaUrl: z.string(),
-});
-export const publishLandResponseSchema = z.object({
-    id: z.string(),
-    ownerId: z.string(),
-    location: z.string(),
-    sizeInSqFt: z.number(),
-    pricePerMonth: z.number(),
-    description: z.string(),
-    heroImageUrl: z.string(),
-    galleryUrls: z.array(z.string()),
-    status: z.string(),
-    createdAt: z.date(),
-});
-// GET /land/search
-export const searchLandInputSchema = z.object({
-    location: z.string().optional(),
-    minPrice: z.number().optional(),
-    maxPrice: z.number().optional(),
-    minSize: z.number().optional(),
-    maxSize: z.number().optional(),
-});
+// Matches your Prisma "Land" model exactly
 export const landSchema = z.object({
     id: z.string(),
     ownerId: z.string(),
-    title: z.string().nullable(),
+    title: z.string(),
     description: z.string(),
     location: z.string(),
     area: z.string().nullable(),
@@ -67,23 +21,42 @@ export const landSchema = z.object({
     pricePerMonth: z.number(),
     heroImageUrl: z.string(),
     galleryUrls: z.array(z.string()),
-    status: z.string(),
+    lalpurjaUrl: z.string().nullable(),
+    status: LandStatusSchema,
     createdAt: z.date(),
+    updatedAt: z.date(),
+});
+export const publishLandInputSchema = z.object({
+    ownerId: z.string().min(1),
+    title: z.string().min(1),
+    location: z.string().min(1),
+    size: LandSizeSchema,
+    price: z.number().positive(),
+    description: z.string().min(1),
+    landpic: z.string().url(),
+    morelandpic: z.array(z.string().url()).optional().default([]),
+    lalpurjaUrl: z.string().optional(),
+});
+export const publishLandResponseSchema = landSchema;
+export const searchLandInputSchema = z.object({
+    location: z.string().optional(),
+    minPrice: z.number().optional(),
+    maxPrice: z.number().optional(),
+    minSize: z.number().optional(),
+    maxSize: z.number().optional(),
 });
 export const searchLandResponseSchema = z.object({
     lands: z.array(landSchema),
 });
-// GET /land/{landId}
 export const getLandByIdInputSchema = z.object({
-    landId: z.string().min(1, 'Land ID is required'),
+    landId: z.string().min(1),
 });
-// PUT /land/{landId}/status
 export const updateLandStatusInputSchema = z.object({
-    landId: z.string().min(1, 'Land ID is required'),
+    landId: z.string().min(1),
     status: LandStatusSchema,
 });
 export const updateLandStatusResponseSchema = z.object({
     id: z.string(),
-    status: z.string(),
+    status: LandStatusSchema,
 });
 //# sourceMappingURL=land.models.js.map

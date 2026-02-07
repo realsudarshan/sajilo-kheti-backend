@@ -1,11 +1,5 @@
+import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
-import z from 'zod';
-import {
-  adminProcedure,
-  protectedProcedure,
-  publicProcedure,
-  router,
-} from '../../trpc.js';
 import {
   createUserInputSchema,
   createUserResponseSchema,
@@ -15,81 +9,63 @@ import {
   upgradeRequestInputSchema,
   upgradeRequestResponseSchema,
 } from '../../models/user.models.js';
+import {
+  adminProcedure,
+  protectedProcedure,
+  publicProcedure,
+  router,
+} from '../../trpc.js';
+import { clerkClient } from '@clerk/express';
 
 export const userRouter = router({
-  /**
-   * GET ALL USERS
-   * Restricted to Admin only for privacy.
-   */
   getAllUser: adminProcedure
-    .meta({
-      openapi: {
-        method: 'GET',
-        path: '/users',
-        description: 'Get all registered users (Admin only)',
-      },
-    })
-    .input(z.void())
     .output(getAllUsersResponseSchema)
     .query(async ({ ctx }) => {
       const users = await ctx.prisma.user.findMany({
         select: {
-          id: true, // This is your Clerk ID
-          email: true,
-          name: true,
-          phone: true,
+          id: true,
           role: true,
           isKycVerified: true,
           createdAt: true,
         },
       });
-      return { users };
-    }),
+      const clerkUsers = await clerkClient.users.getUserList({
+        userId: users.map((u) => u.id),
+      });
+      const hydratedUsers = users.map((dbUser) => {
+        const clerkInfo = clerkUsers.data.find((cu) => cu.id === dbUser.id);
+        
+        return {
+          ...dbUser,
+          // Extract specific fields from Clerk
+          email: clerkInfo?.emailAddresses[0]?.emailAddress ?? 'No email',
+          name: `${clerkInfo?.firstName ?? ''} ${clerkInfo?.lastName ?? ''}`.trim() || 'Unnamed',
+          imageUrl: clerkInfo?.imageUrl,
+        };
+      });
 
-  /**
-   * CREATE / SYNC USER
-   * Usually called via a Clerk Webhook or the first time a user logs in.
-   */
+      return { users: hydratedUsers };
+    }),
+    
   createUser: publicProcedure
-    .meta({
-      openapi: {
-        method: 'POST',
-        path: '/users',
-        description: 'Sync Clerk user with MongoDB',
-      },
-    })
     .input(createUserInputSchema)
     .output(createUserResponseSchema)
     .mutation(async ({ ctx, input }) => {
-      const user = await ctx.prisma.user.create({
-        data: {
-          id: input.id, // Using the Clerk ID string as the MongoDB _id
-          email: input.email,
-          name: input.name ?? null,
-          phone: input.phone ?? null,
-          role: 'LEASER', // Default role for new signups
+      return await ctx.prisma.user.upsert({
+        where: { id: input.id },
+        update: {}, 
+        create: {
+          id: input.id,
+          role: 'LEASER',
         },
       });
-      return user;
     }),
 
-  /**
-   * UPGRADE REQUEST (KYC SUBMISSION)
-   * Only the logged-in user can submit for themselves.
-   */
   upgradeRequest: protectedProcedure
-    .meta({
-      openapi: {
-        method: 'POST',
-        path: '/user/upgrade-request',
-        description: 'Submit KYC details to request Land Owner status',
-      },
-    })
-    .input(upgradeRequestInputSchema.omit({ userId: true })) // We use ctx.userId for security
+    .input(upgradeRequestInputSchema)
     .output(upgradeRequestResponseSchema)
     .mutation(async ({ ctx, input }) => {
-      // ctx.user is guaranteed non-null here by protectedProcedure
-      const kyc = await ctx.prisma.kycDetail.upsert({
+      return await ctx.prisma.kycDetail.upsert({
         where: { userId: ctx.user.id },
         create: {
           userId: ctx.user.id,
@@ -102,61 +78,44 @@ export const userRouter = router({
           citizenshipNumber: input.citizenshipNumber,
           documentUrl: input.documentUrl,
           selfieUrl: input.selfieUrl ?? null,
-          status: 'PENDING', // Reset to pending if they re-upload
+          status: 'PENDING',
         },
       });
-
-      return kyc;
     }),
 
-  /**
-   * UPDATE KYC STATUS
-   * Admin reviews the Lalpurja/Citizenship and upgrades the user.
-   */
   updateKycStatus: adminProcedure
-    .meta({
-      openapi: {
-        method: 'PATCH',
-        path: '/user/kyc/status',
-        description: 'Approve or Reject KYC. Approving upgrades role to OWNER.',
-      },
-    })
     .input(updateKycStatusInputSchema)
     .output(updateKycStatusResponseSchema)
     .mutation(async ({ ctx, input }) => {
-      const kyc = await ctx.prisma.kycDetail.findUnique({
-        where: { userId: input.userId },
-        include: { user: true },
-      });
-
-      if (!kyc) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'No KYC submission found for this user',
+      return await ctx.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const kyc = await tx.kycDetail.findUnique({
+          where: { userId: input.userId },
         });
-      }
 
-      // Execute as a transaction so both records update or neither does
-      const [updatedKyc, updatedUser] = await ctx.prisma.$transaction([
-        ctx.prisma.kycDetail.update({
+        if (!kyc) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'No KYC record' });
+        }
+
+        const updatedKyc = await tx.kycDetail.update({
           where: { userId: input.userId },
           data: { status: input.status },
-        }),
-        ctx.prisma.user.update({
+        });
+
+        const updatedUser = await tx.user.update({
           where: { id: input.userId },
           data: {
             isKycVerified: input.status === 'APPROVED',
-            // If approved, they become an OWNER. If rejected/pending, keep current role.
-            role: input.status === 'APPROVED' ? 'OWNER' : kyc.user.role,
+            // Explicitly setting role to satisfy strict TS check
+            role: input.status === 'APPROVED' ? 'OWNER' : 'LEASER',
           },
-        }),
-      ]);
+        });
 
-      return {
-        userId: updatedUser.id,
-        kycStatus: updatedKyc.status,
-        userRole: updatedUser.role,
-        isKycVerified: updatedUser.isKycVerified,
-      };
+        return {
+          userId: updatedUser.id,
+          kycStatus: updatedKyc.status,
+          userRole: updatedUser.role,
+          isKycVerified: updatedUser.isKycVerified,
+        };
+      });
     }),
 });

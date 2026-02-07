@@ -14,6 +14,7 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
     publish: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             ownerId: string;
+            title: string;
             location: string;
             size: {
                 size: number;
@@ -22,21 +23,24 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
             price: number;
             description: string;
             landpic: string;
-            lalpurjaUrl: string;
             morelandpic?: string[] | undefined;
-            title?: string | undefined;
+            lalpurjaUrl?: string | undefined;
         };
         output: {
             id: string;
             ownerId: string;
+            title: string;
+            description: string;
             location: string;
+            area: string | null;
             sizeInSqFt: number;
             pricePerMonth: number;
-            description: string;
             heroImageUrl: string;
             galleryUrls: string[];
-            status: string;
+            lalpurjaUrl: string | null;
+            status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
             createdAt: Date;
+            updatedAt: Date;
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
@@ -52,7 +56,7 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
             lands: {
                 id: string;
                 ownerId: string;
-                title: string | null;
+                title: string;
                 description: string;
                 location: string;
                 area: string | null;
@@ -60,8 +64,10 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
                 pricePerMonth: number;
                 heroImageUrl: string;
                 galleryUrls: string[];
-                status: string;
+                lalpurjaUrl: string | null;
+                status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                 createdAt: Date;
+                updatedAt: Date;
             }[];
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
@@ -73,7 +79,7 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
         output: {
             id: string;
             ownerId: string;
-            title: string | null;
+            title: string;
             description: string;
             location: string;
             area: string | null;
@@ -81,8 +87,10 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
             pricePerMonth: number;
             heroImageUrl: string;
             galleryUrls: string[];
-            status: string;
+            lalpurjaUrl: string | null;
+            status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
             createdAt: Date;
+            updatedAt: Date;
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
@@ -93,7 +101,7 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
         };
         output: {
             id: string;
-            status: string;
+            status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;

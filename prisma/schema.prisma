@@ -1,5 +1,3 @@
-// This is your Prisma schema file
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,7 +8,6 @@ datasource db {
 }
 
 // --- ENUMS ---
-
 enum UserRole {
   LEASER
   OWNER
@@ -40,14 +37,20 @@ enum LandStatus {
 // --- MODELS ---
 
 model User {
-  id             String        @id @map("_id") // Clerk ID from frontend
-  email          String        @unique
+  // Primary Key is the Clerk ID string
+  id             String        @id @map("_id") 
+  
+  // Minimal mirror fields for searching/sorting in your own DB
+  // Treat these as "Read-Only" - updated only via Webhooks
+  
   name           String?
-  phone          String?
+  
+  // Business logic Clerk doesn't know about
   role           UserRole      @default(LEASER)
   isKycVerified  Boolean       @default(false)
-  kycDetails     KycDetail?    // One-to-one relation for verification docs
   
+  // Relations
+  kycDetails     KycDetail?
   lands          Land[]        @relation("OwnerLands")
   applications   Application[] @relation("LeaserApplications")
   
@@ -57,28 +60,29 @@ model User {
 
 model KycDetail {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String   @unique // Clerk ID
-  user              User     @relation(fields: [userId], references: [id])
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
   citizenshipNumber String
-  documentUrl       String   // URL to S3/Cloudinary for ID photo
+  documentUrl       String   // S3/Cloudinary link
   selfieUrl         String?
-  status            String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  status            String   @default("PENDING") 
 }
 
 model Land {
   id             String        @id @default(auto()) @map("_id") @db.ObjectId
-  ownerId        String        // Clerk ID
+  ownerId        String        
   owner          User          @relation("OwnerLands", fields: [ownerId], references: [id])
   
-  title          String?
+  title          String
   description    String
   location       String
-  area           String?       // e.g., "2 Ropani" or "10 Kattha"
-  sizeInSqFt     Float         // Area in square feet
+  area           String?       
+  sizeInSqFt     Float         
   pricePerMonth  Float
-  heroImageUrl   String        // Primary/hero photo
-  galleryUrls    String[]      // Additional images (max 5)
-  lalpurjaUrl    String?       // Ownership certificate (optional for listing)
+  heroImageUrl   String        
+  galleryUrls    String[]      
+  lalpurjaUrl    String?       
   status         LandStatus    @default(AVAILABLE)
   
   applications   Application[]
@@ -87,24 +91,24 @@ model Land {
 }
 
 model Application {
-  id             String            @id @default(auto()) @map("_id") @db.ObjectId
-  landId         String            @db.ObjectId
-  land           Land              @relation(fields: [landId], references: [id])
+  id                     String            @id @default(auto()) @map("_id") @db.ObjectId
+  landId                 String            @db.ObjectId
+  land                   Land              @relation(fields: [landId], references: [id])
   
-  leaserId       String            // Clerk ID
-  leaser         User              @relation("LeaserApplications", fields: [leaserId], references: [id])
+  leaserId               String            
+  leaser                 User              @relation("LeaserApplications", fields: [leaserId], references: [id])
   
-  plans   String            // The leaser's "point of view"
-  leaseDurationInMonths       Int               // Lease duration in months
-  proposedMonthlyRent        Float             // Proposed rent by leaser
-  status         ApplicationStatus @default(PENDING)
+  plans                  String            
+  leaseDurationInMonths  Int               
+  proposedMonthlyRent    Float             
+  status                 ApplicationStatus @default(PENDING)
   
-  escrow         Escrow?
-  agreement      LeaseAgreement?
-  chatChannelId  String?           // Stream Chat Channel ID
+  escrow                 Escrow?
+  agreement              LeaseAgreement?
+  chatChannelId          String?           
   
-  createdAt      DateTime          @default(now())
-  additionalMessages String?      // Additional messages from leaser
+  createdAt              DateTime          @default(now())
+  additionalMessages     String?           
 }
 
 model Escrow {
@@ -115,20 +119,20 @@ model Escrow {
   amount         Float
   paymentId      String?      // Reference from Khalti/eSewa
   status         EscrowStatus @default(HOLDING)
-  commission     Float        // Your platform's cut
+  commission     Float        
   
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 }
 
 model LeaseAgreement {
-  id                String      @id @default(auto()) @map("_id") @db.ObjectId
-  applicationId     String      @unique @db.ObjectId
-  application       Application @relation(fields: [applicationId], references: [id])
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  applicationId   String      @unique @db.ObjectId
+  application     Application @relation(fields: [applicationId], references: [id])
   
-  malpotPaperUrl    String      // The scanned agreement from Malpot Karyalaya
-  adminVerified     Boolean     @default(false)
-  verifiedAt        DateTime?
+  malpotPaperUrl  String      // Scanned agreement
+  adminVerified   Boolean     @default(false)
+  verifiedAt      DateTime?
   
-  createdAt         DateTime    @default(now())
+  createdAt       DateTime    @default(now())
 }

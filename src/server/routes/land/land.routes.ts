@@ -28,27 +28,33 @@ export const landRouter = router({
       const land = await ctx.prisma.land.create({
         data: {
           ownerId: input.ownerId,
+          title: input.title,
           description: input.description,
           location: input.location,
           sizeInSqFt: sqMeterSize,
           pricePerMonth: input.price,
           heroImageUrl: input.landpic,
           galleryUrls: input.morelandpic ?? [],
-          lalpurjaUrl: input.lalpurjaUrl,
-           
+          lalpurjaUrl: input.lalpurjaUrl ?? null,
+          status: 'AVAILABLE',
         },
       });
+
       return {
         id: land.id,
         ownerId: land.ownerId,
+        title: land.title,
+        description: land.description,
         location: land.location,
+        area: land.area,
         sizeInSqFt: land.sizeInSqFt,
         pricePerMonth: land.pricePerMonth,
-        description: land.description,
         heroImageUrl: land.heroImageUrl,
         galleryUrls: land.galleryUrls,
+        lalpurjaUrl: land.lalpurjaUrl,
         status: land.status,
         createdAt: land.createdAt,
+        updatedAt: land.updatedAt,
       };
     }),
 
@@ -63,38 +69,27 @@ export const landRouter = router({
     .input(searchLandInputSchema)
     .output(searchLandResponseSchema)
     .query(async ({ ctx, input }) => {
-      const where: Record<string, unknown> = {};
+      const where: any = {};
 
       if (input.location) {
-        where.location = { contains: input.location };
+        where.location = { contains: input.location, mode: 'insensitive' };
       }
       if (input.minPrice !== undefined || input.maxPrice !== undefined) {
-        where.pricePerMonth = {};
-        if (input.minPrice !== undefined) (where.pricePerMonth as Record<string, number>).gte = input.minPrice;
-        if (input.maxPrice !== undefined) (where.pricePerMonth as Record<string, number>).lte = input.maxPrice;
+        where.pricePerMonth = {
+          ...(input.minPrice !== undefined && { gte: input.minPrice }),
+          ...(input.maxPrice !== undefined && { lte: input.maxPrice }),
+        };
       }
       if (input.minSize !== undefined || input.maxSize !== undefined) {
-        where.sizeInSqFt = {};
-        if (input.minSize !== undefined) (where.sizeInSqFt as Record<string, number>).gte = input.minSize;
-        if (input.maxSize !== undefined) (where.sizeInSqFt as Record<string, number>).lte = input.maxSize;
+        where.sizeInSqFt = {
+          ...(input.minSize !== undefined && { gte: input.minSize }),
+          ...(input.maxSize !== undefined && { lte: input.maxSize }),
+        };
       }
 
       const lands = await ctx.prisma.land.findMany({
         where,
-        select: {
-          id: true,
-          ownerId: true,
-          title: true,
-          description: true,
-          location: true,
-          area: true,
-          sizeInSqFt: true,
-          pricePerMonth: true,
-          heroImageUrl: true,
-          galleryUrls: true,
-          status: true,
-          createdAt: true,
-        },
+        orderBy: { createdAt: 'desc' },
       });
 
       return {
@@ -109,8 +104,10 @@ export const landRouter = router({
           pricePerMonth: l.pricePerMonth,
           heroImageUrl: l.heroImageUrl,
           galleryUrls: l.galleryUrls,
+          lalpurjaUrl: l.lalpurjaUrl,
           status: l.status,
           createdAt: l.createdAt,
+          updatedAt: l.updatedAt,
         })),
       };
     }),
@@ -143,8 +140,10 @@ export const landRouter = router({
         pricePerMonth: land.pricePerMonth,
         heroImageUrl: land.heroImageUrl,
         galleryUrls: land.galleryUrls,
+        lalpurjaUrl: land.lalpurjaUrl,
         status: land.status,
         createdAt: land.createdAt,
+        updatedAt: land.updatedAt,
       };
     }),
 
@@ -159,12 +158,6 @@ export const landRouter = router({
     .input(updateLandStatusInputSchema)
     .output(updateLandStatusResponseSchema)
     .mutation(async ({ ctx, input }) => {
-      const land = await ctx.prisma.land.findUnique({
-        where: { id: input.landId },
-      });
-      if (!land) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Land not found' });
-      }
       const updated = await ctx.prisma.land.update({
         where: { id: input.landId },
         data: { status: input.status },
@@ -172,4 +165,3 @@ export const landRouter = router({
       return { id: updated.id, status: updated.status };
     }),
 });
-

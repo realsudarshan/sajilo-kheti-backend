@@ -1,11 +1,10 @@
-import { z } from 'zod';
-import type { Context } from '../context.js';
+import z from "zod";
 export declare const payEscrowInputSchema: z.ZodObject<{
     applicationId: z.ZodString;
     amount: z.ZodNumber;
     paymentId: z.ZodString;
     commission: z.ZodNumber;
-}, z.core.$strip>;
+}, z.z.core.$strip>;
 export declare const payEscrowResponseSchema: z.ZodObject<{
     success: z.ZodBoolean;
     message: z.ZodString;
@@ -18,19 +17,19 @@ export declare const payEscrowResponseSchema: z.ZodObject<{
             RELEASED: "RELEASED";
             REFUNDED: "REFUNDED";
         }>;
-    }, z.core.$strip>;
+    }, z.z.core.$strip>;
     landStatus: z.ZodEnum<{
         AVAILABLE: "AVAILABLE";
         IN_NEGOTIATION: "IN_NEGOTIATION";
         LEASED: "LEASED";
         HIDDEN: "HIDDEN";
     }>;
-}, z.core.$strip>;
+}, z.z.core.$strip>;
 export declare const verifyMalpotPapersInputSchema: z.ZodObject<{
     applicationId: z.ZodString;
     malpotPaperUrl: z.ZodString;
     adminId: z.ZodString;
-}, z.core.$strip>;
+}, z.z.core.$strip>;
 export declare const verifyMalpotPapersResponseSchema: z.ZodObject<{
     success: z.ZodBoolean;
     message: z.ZodString;
@@ -42,7 +41,7 @@ export declare const verifyMalpotPapersResponseSchema: z.ZodObject<{
             REJECTED: "REJECTED";
             COMPLETED: "COMPLETED";
         }>;
-    }, z.core.$strip>;
+    }, z.z.core.$strip>;
     landStatus: z.ZodEnum<{
         AVAILABLE: "AVAILABLE";
         IN_NEGOTIATION: "IN_NEGOTIATION";
@@ -54,28 +53,5 @@ export declare const verifyMalpotPapersResponseSchema: z.ZodObject<{
         RELEASED: "RELEASED";
         REFUNDED: "REFUNDED";
     }>;
-}, z.core.$strip>;
-export declare class EscrowModel {
-    static payEscrow(ctx: Context, input: z.infer<typeof payEscrowInputSchema>): Promise<{
-        success: boolean;
-        message: string;
-        escrow: {
-            id: string;
-            applicationId: string;
-            amount: number;
-            status: "HOLDING" | "RELEASED" | "REFUNDED";
-        };
-        landStatus: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
-    }>;
-    static verifyMalpotPapers(ctx: Context, input: z.infer<typeof verifyMalpotPapersInputSchema>): Promise<{
-        success: boolean;
-        message: string;
-        application: {
-            id: string;
-            status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
-        };
-        landStatus: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
-        escrowStatus: "HOLDING" | "RELEASED" | "REFUNDED";
-    }>;
-}
+}, z.z.core.$strip>;
 //# sourceMappingURL=escrow.models.d.ts.map

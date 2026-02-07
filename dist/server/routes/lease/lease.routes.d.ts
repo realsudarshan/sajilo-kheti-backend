@@ -17,7 +17,6 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
      */
     Submitapplication: import("@trpc/server").TRPCMutationProcedure<{
         input: {
-            leaserId: string;
             landId: string;
             leaseDurationInMonths: number;
             proposedMonthlyRent: number;
@@ -96,18 +95,30 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
             status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
             additionalMessages: string | null;
             createdAt: Date;
-            land?: {
-                title: string | null;
+            land: {
+                id: string;
+                ownerId: string;
+                title: string;
+                description: string;
                 location: string;
                 area: string | null;
+                sizeInSqFt: number;
                 pricePerMonth: number;
-            } | undefined;
-            leaser?: {
+                heroImageUrl: string;
+                galleryUrls: string[];
+                lalpurjaUrl: string | null;
+                status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                createdAt: Date;
+                updatedAt: Date;
+            };
+            leaser: {
                 id: string;
                 name: string | null;
-                email: string;
-                phone: string | null;
-            } | undefined;
+                role: "LEASER" | "OWNER" | "ADMIN";
+                isKycVerified: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+            };
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
@@ -128,18 +139,30 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
                 status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
                 additionalMessages: string | null;
                 createdAt: Date;
-                land?: {
-                    title: string | null;
+                land: {
+                    id: string;
+                    ownerId: string;
+                    title: string;
+                    description: string;
                     location: string;
                     area: string | null;
+                    sizeInSqFt: number;
                     pricePerMonth: number;
-                } | undefined;
-                leaser?: {
+                    heroImageUrl: string;
+                    galleryUrls: string[];
+                    lalpurjaUrl: string | null;
+                    status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                    createdAt: Date;
+                    updatedAt: Date;
+                };
+                leaser: {
                     id: string;
                     name: string | null;
-                    email: string;
-                    phone: string | null;
-                } | undefined;
+                    role: "LEASER" | "OWNER" | "ADMIN";
+                    isKycVerified: boolean;
+                    createdAt: Date;
+                    updatedAt: Date;
+                };
             }[];
             total: number;
         };
