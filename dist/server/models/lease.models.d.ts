@@ -7,9 +7,9 @@ export declare const getApplicationByIdResponseSchema: z.ZodObject<{
     leaseDurationInMonths: z.ZodNumber;
     proposedMonthlyRent: z.ZodNumber;
     status: z.ZodEnum<{
+        REJECTED: "REJECTED";
         PENDING: "PENDING";
         ACCEPTED: "ACCEPTED";
-        REJECTED: "REJECTED";
         COMPLETED: "COMPLETED";
     }>;
     additionalMessages: z.ZodNullable<z.ZodString>;
@@ -20,14 +20,15 @@ export declare const getApplicationByIdResponseSchema: z.ZodObject<{
         title: z.ZodString;
         description: z.ZodString;
         location: z.ZodString;
-        area: z.ZodNullable<z.ZodString>;
-        sizeInSqFt: z.ZodNumber;
+        sizeInSqmeter: z.ZodNumber;
         pricePerMonth: z.ZodNumber;
         heroImageUrl: z.ZodString;
         galleryUrls: z.ZodArray<z.ZodString>;
         lalpurjaUrl: z.ZodNullable<z.ZodString>;
         status: z.ZodEnum<{
             AVAILABLE: "AVAILABLE";
+            UNVERIFIED: "UNVERIFIED";
+            REJECTED: "REJECTED";
             IN_NEGOTIATION: "IN_NEGOTIATION";
             LEASED: "LEASED";
             HIDDEN: "HIDDEN";
@@ -57,9 +58,9 @@ export declare const getAllApplicationsResponseSchema: z.ZodObject<{
         leaseDurationInMonths: z.ZodNumber;
         proposedMonthlyRent: z.ZodNumber;
         status: z.ZodEnum<{
+            REJECTED: "REJECTED";
             PENDING: "PENDING";
             ACCEPTED: "ACCEPTED";
-            REJECTED: "REJECTED";
             COMPLETED: "COMPLETED";
         }>;
         additionalMessages: z.ZodNullable<z.ZodString>;
@@ -70,14 +71,15 @@ export declare const getAllApplicationsResponseSchema: z.ZodObject<{
             title: z.ZodString;
             description: z.ZodString;
             location: z.ZodString;
-            area: z.ZodNullable<z.ZodString>;
-            sizeInSqFt: z.ZodNumber;
+            sizeInSqmeter: z.ZodNumber;
             pricePerMonth: z.ZodNumber;
             heroImageUrl: z.ZodString;
             galleryUrls: z.ZodArray<z.ZodString>;
             lalpurjaUrl: z.ZodNullable<z.ZodString>;
             status: z.ZodEnum<{
                 AVAILABLE: "AVAILABLE";
+                UNVERIFIED: "UNVERIFIED";
+                REJECTED: "REJECTED";
                 IN_NEGOTIATION: "IN_NEGOTIATION";
                 LEASED: "LEASED";
                 HIDDEN: "HIDDEN";
@@ -123,9 +125,9 @@ export declare const acceptApplicationResponseSchema: z.ZodObject<{
     application: z.ZodObject<{
         id: z.ZodString;
         status: z.ZodEnum<{
+            REJECTED: "REJECTED";
             PENDING: "PENDING";
             ACCEPTED: "ACCEPTED";
-            REJECTED: "REJECTED";
             COMPLETED: "COMPLETED";
         }>;
         leaserId: z.ZodString;
@@ -142,9 +144,9 @@ export declare const rejectApplicationResponseSchema: z.ZodObject<{
     application: z.ZodObject<{
         id: z.ZodString;
         status: z.ZodEnum<{
+            REJECTED: "REJECTED";
             PENDING: "PENDING";
             ACCEPTED: "ACCEPTED";
-            REJECTED: "REJECTED";
             COMPLETED: "COMPLETED";
         }>;
     }, z.core.$strip>;
@@ -154,9 +156,9 @@ export declare const getApplicationByIdInputSchema: z.ZodObject<{
 }, z.core.$strip>;
 export declare const getAllApplicationsInputSchema: z.ZodObject<{
     status: z.ZodOptional<z.ZodEnum<{
+        REJECTED: "REJECTED";
         PENDING: "PENDING";
         ACCEPTED: "ACCEPTED";
-        REJECTED: "REJECTED";
         COMPLETED: "COMPLETED";
     }>>;
     landId: z.ZodOptional<z.ZodString>;

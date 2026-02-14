@@ -1,23 +1,33 @@
 import { z } from 'zod';
-export const LandStatusSchema = z.enum(['AVAILABLE', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']);
-export const LandUnitSchema = z.enum([
-    "ROPANI", "AANA", "PAISA", "DAAM",
-    "BIGHA", "KATTHA", "DHUR",
-    "SQ_FT", "SQ_MTR"
+export const LandStatusSchema = z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']);
+// This handles the compound units (Ropani-Aana-Paisa-Daam, etc.)
+export const LandSizeSchema = z.discriminatedUnion("system", [
+    z.object({
+        system: z.literal("HILLY"),
+        ropani: z.number().min(0).default(0),
+        aana: z.number().min(0).max(15.99).default(0),
+        paisa: z.number().min(0).max(3.99).default(0),
+        daam: z.number().min(0).max(3.99).default(0),
+    }),
+    z.object({
+        system: z.literal("TERAI"),
+        bigha: z.number().min(0).default(0),
+        kattha: z.number().min(0).max(19.99).default(0),
+        dhur: z.number().min(0).max(19.99).default(0),
+    }),
+    z.object({
+        system: z.literal("FLAT"),
+        value: z.number().positive(),
+        unit: z.enum(["SQ_FT", "SQ_MTR"]),
+    }),
 ]);
-export const LandSizeSchema = z.object({
-    size: z.number().positive("Size must be a positive number"),
-    unit: LandUnitSchema,
-});
-// Matches your Prisma "Land" model exactly
 export const landSchema = z.object({
     id: z.string(),
     ownerId: z.string(),
     title: z.string(),
     description: z.string(),
     location: z.string(),
-    area: z.string().nullable(),
-    sizeInSqFt: z.number(),
+    sizeInSqmeter: z.number(),
     pricePerMonth: z.number(),
     heroImageUrl: z.string(),
     galleryUrls: z.array(z.string()),
@@ -45,6 +55,7 @@ export const searchLandInputSchema = z.object({
     minSize: z.number().optional(),
     maxSize: z.number().optional(),
 });
+// FIXED: Added the missing export
 export const searchLandResponseSchema = z.object({
     lands: z.array(landSchema),
 });

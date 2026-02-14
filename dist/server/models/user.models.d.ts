@@ -5,8 +5,8 @@ export declare const UserRoleSchema: z.ZodEnum<{
     ADMIN: "ADMIN";
 }>;
 export declare const KycStatusSchema: z.ZodEnum<{
-    PENDING: "PENDING";
     REJECTED: "REJECTED";
+    PENDING: "PENDING";
     APPROVED: "APPROVED";
 }>;
 export declare const UserSchema: z.ZodObject<{
@@ -63,8 +63,8 @@ export declare const upgradeRequestResponseSchema: z.ZodObject<{
 export declare const updateKycStatusInputSchema: z.ZodObject<{
     userId: z.ZodString;
     status: z.ZodEnum<{
-        PENDING: "PENDING";
         REJECTED: "REJECTED";
+        PENDING: "PENDING";
         APPROVED: "APPROVED";
     }>;
 }, z.core.$strip>;

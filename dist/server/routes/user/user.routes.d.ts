@@ -58,7 +58,7 @@ export declare const userRouter: import("@trpc/server").TRPCBuiltRouter<{
     updateKycStatus: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             userId: string;
-            status: "PENDING" | "REJECTED" | "APPROVED";
+            status: "REJECTED" | "PENDING" | "APPROVED";
         };
         output: {
             userId: string;

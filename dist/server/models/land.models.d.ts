@@ -1,49 +1,46 @@
 import { z } from 'zod';
 export declare const LandStatusSchema: z.ZodEnum<{
     AVAILABLE: "AVAILABLE";
+    UNVERIFIED: "UNVERIFIED";
+    REJECTED: "REJECTED";
     IN_NEGOTIATION: "IN_NEGOTIATION";
     LEASED: "LEASED";
     HIDDEN: "HIDDEN";
 }>;
-export declare const LandUnitSchema: z.ZodEnum<{
-    ROPANI: "ROPANI";
-    AANA: "AANA";
-    PAISA: "PAISA";
-    DAAM: "DAAM";
-    BIGHA: "BIGHA";
-    KATTHA: "KATTHA";
-    DHUR: "DHUR";
-    SQ_FT: "SQ_FT";
-    SQ_MTR: "SQ_MTR";
-}>;
-export declare const LandSizeSchema: z.ZodObject<{
-    size: z.ZodNumber;
+export declare const LandSizeSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
+    system: z.ZodLiteral<"HILLY">;
+    ropani: z.ZodDefault<z.ZodNumber>;
+    aana: z.ZodDefault<z.ZodNumber>;
+    paisa: z.ZodDefault<z.ZodNumber>;
+    daam: z.ZodDefault<z.ZodNumber>;
+}, z.core.$strip>, z.ZodObject<{
+    system: z.ZodLiteral<"TERAI">;
+    bigha: z.ZodDefault<z.ZodNumber>;
+    kattha: z.ZodDefault<z.ZodNumber>;
+    dhur: z.ZodDefault<z.ZodNumber>;
+}, z.core.$strip>, z.ZodObject<{
+    system: z.ZodLiteral<"FLAT">;
+    value: z.ZodNumber;
     unit: z.ZodEnum<{
-        ROPANI: "ROPANI";
-        AANA: "AANA";
-        PAISA: "PAISA";
-        DAAM: "DAAM";
-        BIGHA: "BIGHA";
-        KATTHA: "KATTHA";
-        DHUR: "DHUR";
         SQ_FT: "SQ_FT";
         SQ_MTR: "SQ_MTR";
     }>;
-}, z.core.$strip>;
+}, z.core.$strip>], "system">;
 export declare const landSchema: z.ZodObject<{
     id: z.ZodString;
     ownerId: z.ZodString;
     title: z.ZodString;
     description: z.ZodString;
     location: z.ZodString;
-    area: z.ZodNullable<z.ZodString>;
-    sizeInSqFt: z.ZodNumber;
+    sizeInSqmeter: z.ZodNumber;
     pricePerMonth: z.ZodNumber;
     heroImageUrl: z.ZodString;
     galleryUrls: z.ZodArray<z.ZodString>;
     lalpurjaUrl: z.ZodNullable<z.ZodString>;
     status: z.ZodEnum<{
         AVAILABLE: "AVAILABLE";
+        UNVERIFIED: "UNVERIFIED";
+        REJECTED: "REJECTED";
         IN_NEGOTIATION: "IN_NEGOTIATION";
         LEASED: "LEASED";
         HIDDEN: "HIDDEN";
@@ -55,20 +52,25 @@ export declare const publishLandInputSchema: z.ZodObject<{
     ownerId: z.ZodString;
     title: z.ZodString;
     location: z.ZodString;
-    size: z.ZodObject<{
-        size: z.ZodNumber;
+    size: z.ZodDiscriminatedUnion<[z.ZodObject<{
+        system: z.ZodLiteral<"HILLY">;
+        ropani: z.ZodDefault<z.ZodNumber>;
+        aana: z.ZodDefault<z.ZodNumber>;
+        paisa: z.ZodDefault<z.ZodNumber>;
+        daam: z.ZodDefault<z.ZodNumber>;
+    }, z.core.$strip>, z.ZodObject<{
+        system: z.ZodLiteral<"TERAI">;
+        bigha: z.ZodDefault<z.ZodNumber>;
+        kattha: z.ZodDefault<z.ZodNumber>;
+        dhur: z.ZodDefault<z.ZodNumber>;
+    }, z.core.$strip>, z.ZodObject<{
+        system: z.ZodLiteral<"FLAT">;
+        value: z.ZodNumber;
         unit: z.ZodEnum<{
-            ROPANI: "ROPANI";
-            AANA: "AANA";
-            PAISA: "PAISA";
-            DAAM: "DAAM";
-            BIGHA: "BIGHA";
-            KATTHA: "KATTHA";
-            DHUR: "DHUR";
             SQ_FT: "SQ_FT";
             SQ_MTR: "SQ_MTR";
         }>;
-    }, z.core.$strip>;
+    }, z.core.$strip>], "system">;
     price: z.ZodNumber;
     description: z.ZodString;
     landpic: z.ZodString;
@@ -81,14 +83,15 @@ export declare const publishLandResponseSchema: z.ZodObject<{
     title: z.ZodString;
     description: z.ZodString;
     location: z.ZodString;
-    area: z.ZodNullable<z.ZodString>;
-    sizeInSqFt: z.ZodNumber;
+    sizeInSqmeter: z.ZodNumber;
     pricePerMonth: z.ZodNumber;
     heroImageUrl: z.ZodString;
     galleryUrls: z.ZodArray<z.ZodString>;
     lalpurjaUrl: z.ZodNullable<z.ZodString>;
     status: z.ZodEnum<{
         AVAILABLE: "AVAILABLE";
+        UNVERIFIED: "UNVERIFIED";
+        REJECTED: "REJECTED";
         IN_NEGOTIATION: "IN_NEGOTIATION";
         LEASED: "LEASED";
         HIDDEN: "HIDDEN";
@@ -110,14 +113,15 @@ export declare const searchLandResponseSchema: z.ZodObject<{
         title: z.ZodString;
         description: z.ZodString;
         location: z.ZodString;
-        area: z.ZodNullable<z.ZodString>;
-        sizeInSqFt: z.ZodNumber;
+        sizeInSqmeter: z.ZodNumber;
         pricePerMonth: z.ZodNumber;
         heroImageUrl: z.ZodString;
         galleryUrls: z.ZodArray<z.ZodString>;
         lalpurjaUrl: z.ZodNullable<z.ZodString>;
         status: z.ZodEnum<{
             AVAILABLE: "AVAILABLE";
+            UNVERIFIED: "UNVERIFIED";
+            REJECTED: "REJECTED";
             IN_NEGOTIATION: "IN_NEGOTIATION";
             LEASED: "LEASED";
             HIDDEN: "HIDDEN";
@@ -133,6 +137,8 @@ export declare const updateLandStatusInputSchema: z.ZodObject<{
     landId: z.ZodString;
     status: z.ZodEnum<{
         AVAILABLE: "AVAILABLE";
+        UNVERIFIED: "UNVERIFIED";
+        REJECTED: "REJECTED";
         IN_NEGOTIATION: "IN_NEGOTIATION";
         LEASED: "LEASED";
         HIDDEN: "HIDDEN";
@@ -142,6 +148,8 @@ export declare const updateLandStatusResponseSchema: z.ZodObject<{
     id: z.ZodString;
     status: z.ZodEnum<{
         AVAILABLE: "AVAILABLE";
+        UNVERIFIED: "UNVERIFIED";
+        REJECTED: "REJECTED";
         IN_NEGOTIATION: "IN_NEGOTIATION";
         LEASED: "LEASED";
         HIDDEN: "HIDDEN";

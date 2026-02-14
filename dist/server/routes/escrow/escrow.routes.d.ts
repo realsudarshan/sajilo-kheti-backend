@@ -30,7 +30,7 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
                 amount: number;
                 status: "HOLDING" | "RELEASED" | "REFUNDED";
             };
-            landStatus: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+            landStatus: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
@@ -48,9 +48,9 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
             message: string;
             application: {
                 id: string;
-                status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
+                status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
             };
-            landStatus: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+            landStatus: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
             escrowStatus: "HOLDING" | "RELEASED" | "REFUNDED";
         };
         meta: import("trpc-to-openapi").OpenApiMeta;

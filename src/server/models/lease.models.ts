@@ -17,13 +17,19 @@ const BaseLandSchema = z.object({
   title: z.string(),
   description: z.string(),
   location: z.string(),
-  area: z.string().nullable(),
-  sizeInSqFt: z.number(),
+  sizeInSqmeter: z.number(),
   pricePerMonth: z.number(),
   heroImageUrl: z.string(),
   galleryUrls: z.array(z.string()),
   lalpurjaUrl: z.string().nullable(),
-  status: z.enum(['AVAILABLE', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']),
+  status: z.enum([
+    'AVAILABLE',
+    'UNVERIFIED',
+    'REJECTED',
+    'IN_NEGOTIATION',
+    'LEASED',
+    'HIDDEN'
+  ]),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -75,9 +81,9 @@ export const acceptApplicationResponseSchema = z.object({
   }),
 });
 
-export const rejectApplicationInputSchema = z.object({ 
+export const rejectApplicationInputSchema = z.object({
   applicationId: z.string(),
-  reason: z.string().optional() 
+  reason: z.string().optional()
 });
 export const rejectApplicationResponseSchema = z.object({
   success: z.boolean(),

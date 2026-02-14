@@ -17,8 +17,20 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
             title: string;
             location: string;
             size: {
-                size: number;
-                unit: "ROPANI" | "AANA" | "PAISA" | "DAAM" | "BIGHA" | "KATTHA" | "DHUR" | "SQ_FT" | "SQ_MTR";
+                system: "HILLY";
+                ropani?: number | undefined;
+                aana?: number | undefined;
+                paisa?: number | undefined;
+                daam?: number | undefined;
+            } | {
+                system: "TERAI";
+                bigha?: number | undefined;
+                kattha?: number | undefined;
+                dhur?: number | undefined;
+            } | {
+                system: "FLAT";
+                value: number;
+                unit: "SQ_FT" | "SQ_MTR";
             };
             price: number;
             description: string;
@@ -32,15 +44,56 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
             title: string;
             description: string;
             location: string;
-            area: string | null;
-            sizeInSqFt: number;
+            sizeInSqmeter: number;
             pricePerMonth: number;
             heroImageUrl: string;
             galleryUrls: string[];
             lalpurjaUrl: string | null;
-            status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+            status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
             createdAt: Date;
             updatedAt: Date;
+        };
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
+    acceptLand: import("@trpc/server").TRPCMutationProcedure<{
+        input: {
+            landId: string;
+        };
+        output: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            ownerId: string;
+            title: string;
+            location: string;
+            description: string;
+            lalpurjaUrl: string | null;
+            status: import("@prisma/client").$Enums.LandStatus;
+            sizeInSqmeter: number;
+            pricePerMonth: number;
+            heroImageUrl: string;
+            galleryUrls: string[];
+        };
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
+    rejectLand: import("@trpc/server").TRPCMutationProcedure<{
+        input: {
+            landId: string;
+        };
+        output: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            ownerId: string;
+            title: string;
+            location: string;
+            description: string;
+            lalpurjaUrl: string | null;
+            status: import("@prisma/client").$Enums.LandStatus;
+            sizeInSqmeter: number;
+            pricePerMonth: number;
+            heroImageUrl: string;
+            galleryUrls: string[];
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
@@ -59,13 +112,12 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
                 title: string;
                 description: string;
                 location: string;
-                area: string | null;
-                sizeInSqFt: number;
+                sizeInSqmeter: number;
                 pricePerMonth: number;
                 heroImageUrl: string;
                 galleryUrls: string[];
                 lalpurjaUrl: string | null;
-                status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                 createdAt: Date;
                 updatedAt: Date;
             }[];
@@ -82,13 +134,12 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
             title: string;
             description: string;
             location: string;
-            area: string | null;
-            sizeInSqFt: number;
+            sizeInSqmeter: number;
             pricePerMonth: number;
             heroImageUrl: string;
             galleryUrls: string[];
             lalpurjaUrl: string | null;
-            status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+            status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
             createdAt: Date;
             updatedAt: Date;
         };
@@ -97,12 +148,38 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
     updateStatus: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             landId: string;
-            status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+            status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
         };
         output: {
             id: string;
-            status: "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+            status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
         };
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
+    getAllLandsAdmin: import("@trpc/server").TRPCQueryProcedure<{
+        input: {
+            status?: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN" | undefined;
+        } | undefined;
+        output: ({
+            owner: {
+                id: string;
+                name: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            ownerId: string;
+            title: string;
+            location: string;
+            description: string;
+            lalpurjaUrl: string | null;
+            status: import("@prisma/client").$Enums.LandStatus;
+            sizeInSqmeter: number;
+            pricePerMonth: number;
+            heroImageUrl: string;
+            galleryUrls: string[];
+        })[];
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
 }>>;

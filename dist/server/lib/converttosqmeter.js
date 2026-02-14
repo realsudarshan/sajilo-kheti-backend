@@ -1,28 +1,27 @@
-export const convertToSqMeter = (size, unit) => {
-    switch (unit.toUpperCase()) {
-        // Hilly System
-        case "ROPANI":
-            return size * 508.72;
-        case "AANA":
-            return size * 31.80;
-        case "PAISA":
-            return size * 7.95;
-        case "DAAM":
-            return size * 1.99;
-        // Terai System
-        case "BIGHA":
-            return size * 6772.63;
-        case "KATTHA":
-            return size * 338.63;
-        case "DHUR":
-            return size * 16.93;
-        // Standard Metrics
-        case "SQ_FT":
-            return size * 0.092903;
-        case "SQ_MTR":
-            return size;
+/**
+ * Converts various Nepali land units and Square Feet into Square Meters.
+ * Constants are based on standard conversions: 1 Ropani = 508.72 m² approx.
+ */
+export const calculateSqMtr = (size) => {
+    switch (size.system) {
+        case "HILLY":
+            // Ropani (508.72), Aana (31.80), Paisa (7.95), Daam (1.99)
+            return (size.ropani * 508.72 +
+                size.aana * 31.80 +
+                size.paisa * 7.95 +
+                size.daam * 1.99);
+        case "TERAI":
+            // Bigha (6772.63), Kattha (338.63), Dhur (16.93)
+            return (size.bigha * 6772.63 +
+                size.kattha * 338.63 +
+                size.dhur * 16.93);
+        case "FLAT":
+            // If SQ_FT, divide by 10.7639 to get SQ_MTR
+            return size.unit === "SQ_FT"
+                ? size.value / 10.7639
+                : size.value;
         default:
-            throw new Error(`Unsupported unit: ${unit}`);
+            return 0;
     }
 };
 //# sourceMappingURL=converttosqmeter.js.map

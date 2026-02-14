@@ -20,6 +20,8 @@ export declare const payEscrowResponseSchema: z.ZodObject<{
     }, z.z.core.$strip>;
     landStatus: z.ZodEnum<{
         AVAILABLE: "AVAILABLE";
+        UNVERIFIED: "UNVERIFIED";
+        REJECTED: "REJECTED";
         IN_NEGOTIATION: "IN_NEGOTIATION";
         LEASED: "LEASED";
         HIDDEN: "HIDDEN";
@@ -36,14 +38,16 @@ export declare const verifyMalpotPapersResponseSchema: z.ZodObject<{
     application: z.ZodObject<{
         id: z.ZodString;
         status: z.ZodEnum<{
+            REJECTED: "REJECTED";
             PENDING: "PENDING";
             ACCEPTED: "ACCEPTED";
-            REJECTED: "REJECTED";
             COMPLETED: "COMPLETED";
         }>;
     }, z.z.core.$strip>;
     landStatus: z.ZodEnum<{
         AVAILABLE: "AVAILABLE";
+        UNVERIFIED: "UNVERIFIED";
+        REJECTED: "REJECTED";
         IN_NEGOTIATION: "IN_NEGOTIATION";
         LEASED: "LEASED";
         HIDDEN: "HIDDEN";

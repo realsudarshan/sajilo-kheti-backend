@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { leaserProcedure, ownerProcedure, publicProcedure, router } from '../../trpc.js';
+import { adminProcedure, leaserProcedure, ownerProcedure, publicProcedure, router } from '../../trpc.js';
 import {
   getLandByIdInputSchema,
   landSchema,
@@ -10,66 +10,63 @@ import {
   updateLandStatusInputSchema,
   updateLandStatusResponseSchema,
 } from '../../models/land.models.js';
-import { convertToSqMeter } from '../../lib/converttosqmeter.js';
-
+import { calculateSqMtr } from '../../lib/converttosqmeter.js';
+import z from 'zod';
 export const landRouter = router({
   publish: publicProcedure
-    .meta({
-      openapi: {
-        method: 'POST',
-        path: '/land/publish',
-        description: 'Create a land listing',
-      },
-    })
     .input(publishLandInputSchema)
     .output(publishLandResponseSchema)
     .mutation(async ({ ctx, input }) => {
-      const sqMeterSize = convertToSqMeter(input.size.size, input.size.unit);
-      const land = await ctx.prisma.land.create({
+      const totalSqmeter = calculateSqMtr(input.size);
+
+      return await ctx.prisma.land.create({
         data: {
           ownerId: input.ownerId,
           title: input.title,
           description: input.description,
           location: input.location,
-          sizeInSqFt: sqMeterSize,
+          sizeInSqmeter:totalSqmeter,
           pricePerMonth: input.price,
           heroImageUrl: input.landpic,
-          galleryUrls: input.morelandpic ?? [],
+          galleryUrls: input.morelandpic,
           lalpurjaUrl: input.lalpurjaUrl ?? null,
-          status: 'AVAILABLE',
+          status:'UNVERIFIED',
         },
       });
-
-      return {
-        id: land.id,
-        ownerId: land.ownerId,
-        title: land.title,
-        description: land.description,
-        location: land.location,
-        area: land.area,
-        sizeInSqFt: land.sizeInSqFt,
-        pricePerMonth: land.pricePerMonth,
-        heroImageUrl: land.heroImageUrl,
-        galleryUrls: land.galleryUrls,
-        lalpurjaUrl: land.lalpurjaUrl,
-        status: land.status,
-        createdAt: land.createdAt,
-        updatedAt: land.updatedAt,
-      };
     }),
+    acceptLand: adminProcedure
+    .input(z.object({ landId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.prisma.land.update({
+        where: { id: input.landId },
+        data: { status: 'AVAILABLE' },
+      });
+    }),
+    rejectLand: adminProcedure
+    .input(z.object({ landId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.prisma.land.update({
+        where: { id: input.landId },
+        data: { status: 'REJECTED' },
+      });
+    }),
+    
 
   search: publicProcedure
-    .meta({
-      openapi: {
-        method: 'GET',
-        path: '/land/search',
-        description: 'Filter land by location, price, or size',
-      },
-    })
     .input(searchLandInputSchema)
     .output(searchLandResponseSchema)
     .query(async ({ ctx, input }) => {
-      const where: any = {};
+      console.log("Search Input:", input);
+       //show the types of input fields      console.log("Input Types:", {
+       
+       console.log("location:", typeof input.location);
+        console.log("minPrice:", typeof input.minPrice);
+        console.log("maxSize:", typeof input.maxSize);
+        console.log("minSize:", typeof input.minSize);
+
+      const where: any = {
+      status: 'AVAILABLE' 
+    };
 
       if (input.location) {
         where.location = { contains: input.location, mode: 'insensitive' };
@@ -86,75 +83,28 @@ export const landRouter = router({
           ...(input.maxSize !== undefined && { lte: input.maxSize }),
         };
       }
-
+console.log("Constructed Where Clause:", where);
       const lands = await ctx.prisma.land.findMany({
         where,
         orderBy: { createdAt: 'desc' },
       });
-
-      return {
-        lands: lands.map((l) => ({
-          id: l.id,
-          ownerId: l.ownerId,
-          title: l.title,
-          description: l.description,
-          location: l.location,
-          area: l.area,
-          sizeInSqFt: l.sizeInSqFt,
-          pricePerMonth: l.pricePerMonth,
-          heroImageUrl: l.heroImageUrl,
-          galleryUrls: l.galleryUrls,
-          lalpurjaUrl: l.lalpurjaUrl,
-          status: l.status,
-          createdAt: l.createdAt,
-          updatedAt: l.updatedAt,
-        })),
-      };
+console.log("Found Lands:", lands);
+      return { lands };
     }),
 
-  getById: ownerProcedure
-    .meta({
-      openapi: {
-        method: 'GET',
-        path: '/land/{landId}',
-        description: 'View full details of a specific plot',
-      },
-    })
+  getById: publicProcedure
     .input(getLandByIdInputSchema)
     .output(landSchema)
     .query(async ({ ctx, input }) => {
       const land = await ctx.prisma.land.findUnique({
         where: { id: input.landId },
       });
-      if (!land) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Land not found' });
-      }
-      return {
-        id: land.id,
-        ownerId: land.ownerId,
-        title: land.title,
-        description: land.description,
-        location: land.location,
-        area: land.area,
-        sizeInSqFt: land.sizeInSqFt,
-        pricePerMonth: land.pricePerMonth,
-        heroImageUrl: land.heroImageUrl,
-        galleryUrls: land.galleryUrls,
-        lalpurjaUrl: land.lalpurjaUrl,
-        status: land.status,
-        createdAt: land.createdAt,
-        updatedAt: land.updatedAt,
-      };
+      if (!land) throw new TRPCError({ code: 'NOT_FOUND', message: 'Land not found' });
+      return land;
     }),
+    
 
-  updateStatus: publicProcedure
-    .meta({
-      openapi: {
-        method: 'PUT',
-        path: '/land/{landId}/status',
-        description: 'Mark land as Leased, Hidden, or Available',
-      },
-    })
+  updateStatus: adminProcedure
     .input(updateLandStatusInputSchema)
     .output(updateLandStatusResponseSchema)
     .mutation(async ({ ctx, input }) => {
@@ -164,4 +114,40 @@ export const landRouter = router({
       });
       return { id: updated.id, status: updated.status };
     }),
+    getAllLandsAdmin: adminProcedure
+  .input(z.object({
+    status: z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']).optional()
+  }).optional()) // Make the whole input optional too
+  .query(async ({ ctx, input }) => {
+    try {
+      // Build the filter safely
+      const where: any = {};
+      
+      // Only apply status filter if it exists and isn't a "placeholder" string
+      if (input?.status) {
+        where.status = input.status;
+      }
+
+      const lands = await ctx.prisma.land.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: { 
+          owner: {
+            select: {
+              id: true,
+              name: true,
+            }
+          } 
+        }
+      });
+
+      return lands;
+    } catch (error) {
+      console.error("Database Error in getAllLandsAdmin:", error);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch lands for admin',
+      });
+    }
+  }),
 });

@@ -16,9 +16,9 @@ export const payEscrowResponseSchema = z.object({
         amount: z.number(),
         status: z.enum(['HOLDING', 'RELEASED', 'REFUNDED']),
     }),
-    landStatus: z.enum(['AVAILABLE', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']),
+    // ADD THE MISSING STATUSES HERE:
+    landStatus: z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']),
 });
-
 // Verify Malpot Papers Schemas
 export const verifyMalpotPapersInputSchema = z.object({
     applicationId: z.string(),
@@ -33,7 +33,8 @@ export const verifyMalpotPapersResponseSchema = z.object({
         id: z.string(),
         status: z.enum(['PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED']),
     }),
-    landStatus: z.enum(['AVAILABLE', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']),
+    // AND HERE:
+    landStatus: z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']),
     escrowStatus: z.enum(['HOLDING', 'RELEASED', 'REFUNDED']),
 });
 
