@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { publicProcedure, router } from '../../trpc.js';
+import { leaserProcedure, ownerProcedure, publicProcedure, router } from '../../trpc.js';
 import { getLandByIdInputSchema, landSchema, publishLandInputSchema, publishLandResponseSchema, searchLandInputSchema, searchLandResponseSchema, updateLandStatusInputSchema, updateLandStatusResponseSchema, } from '../../models/land.models.js';
 import { convertToSqMeter } from '../../lib/converttosqmeter.js';
 export const landRouter = router({
@@ -96,7 +96,7 @@ export const landRouter = router({
             })),
         };
     }),
-    getById: publicProcedure
+    getById: ownerProcedure
         .meta({
         openapi: {
             method: 'GET',
