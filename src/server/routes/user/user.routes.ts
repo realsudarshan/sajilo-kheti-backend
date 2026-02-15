@@ -165,4 +165,25 @@ export const userRouter = router({
 
       return { kycDetails: hydratedKycDetails };
     }),
+    getMe: protectedProcedure
+    .query(async ({ ctx }) => {
+      // Fetch the full document including all relations defined in your schema
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: ctx.user.id },
+        include: {
+          kycDetails: true,    // Details from the kycDetail model
+          lands: true,         // Array of lands owned by this user
+          applications: true,  // Array of applications made by this user
+        },
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'User profile not found in MongoDB.',
+        });
+      }
+
+      return user;
+    }),
 });

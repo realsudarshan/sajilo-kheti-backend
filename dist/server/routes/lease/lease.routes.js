@@ -160,7 +160,7 @@ export const leaseRouter = router({
         }
         return application;
     }),
-    GetAllApplications: adminProcedure
+    GetAllApplications: ownerProcedure
         .meta({ openapi: { method: 'GET', path: '/lease/applications', description: 'Get all lease applications' } })
         .input(getAllApplicationsInputSchema)
         .output(getAllApplicationsResponseSchema)

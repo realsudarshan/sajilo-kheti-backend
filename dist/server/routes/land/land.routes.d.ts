@@ -52,6 +52,10 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
             status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
             createdAt: Date;
             updatedAt: Date;
+            owner?: {
+                id: string;
+                name: string | null;
+            } | undefined;
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
@@ -61,18 +65,18 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
         };
         output: {
             id: string;
+            status: import("@prisma/client").$Enums.LandStatus;
             createdAt: Date;
             updatedAt: Date;
+            description: string;
             ownerId: string;
             title: string;
             location: string;
-            description: string;
-            lalpurjaUrl: string | null;
-            status: import("@prisma/client").$Enums.LandStatus;
             sizeInSqmeter: number;
             pricePerMonth: number;
             heroImageUrl: string;
             galleryUrls: string[];
+            lalpurjaUrl: string | null;
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
@@ -82,18 +86,18 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
         };
         output: {
             id: string;
+            status: import("@prisma/client").$Enums.LandStatus;
             createdAt: Date;
             updatedAt: Date;
+            description: string;
             ownerId: string;
             title: string;
             location: string;
-            description: string;
-            lalpurjaUrl: string | null;
-            status: import("@prisma/client").$Enums.LandStatus;
             sizeInSqmeter: number;
             pricePerMonth: number;
             heroImageUrl: string;
             galleryUrls: string[];
+            lalpurjaUrl: string | null;
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
@@ -120,6 +124,10 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
                 status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                 createdAt: Date;
                 updatedAt: Date;
+                owner?: {
+                    id: string;
+                    name: string | null;
+                } | undefined;
             }[];
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
@@ -142,6 +150,10 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
             status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
             createdAt: Date;
             updatedAt: Date;
+            owner?: {
+                id: string;
+                name: string | null;
+            } | undefined;
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
@@ -167,18 +179,18 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
             };
         } & {
             id: string;
+            status: import("@prisma/client").$Enums.LandStatus;
             createdAt: Date;
             updatedAt: Date;
+            description: string;
             ownerId: string;
             title: string;
             location: string;
-            description: string;
-            lalpurjaUrl: string | null;
-            status: import("@prisma/client").$Enums.LandStatus;
             sizeInSqmeter: number;
             pricePerMonth: number;
             heroImageUrl: string;
             galleryUrls: string[];
+            lalpurjaUrl: string | null;
         })[];
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;

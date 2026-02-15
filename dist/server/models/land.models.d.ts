@@ -29,6 +29,10 @@ export declare const LandSizeSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
 export declare const landSchema: z.ZodObject<{
     id: z.ZodString;
     ownerId: z.ZodString;
+    owner: z.ZodOptional<z.ZodObject<{
+        id: z.ZodString;
+        name: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>>;
     title: z.ZodString;
     description: z.ZodString;
     location: z.ZodString;
@@ -80,6 +84,10 @@ export declare const publishLandInputSchema: z.ZodObject<{
 export declare const publishLandResponseSchema: z.ZodObject<{
     id: z.ZodString;
     ownerId: z.ZodString;
+    owner: z.ZodOptional<z.ZodObject<{
+        id: z.ZodString;
+        name: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>>;
     title: z.ZodString;
     description: z.ZodString;
     location: z.ZodString;
@@ -110,6 +118,10 @@ export declare const searchLandResponseSchema: z.ZodObject<{
     lands: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
         ownerId: z.ZodString;
+        owner: z.ZodOptional<z.ZodObject<{
+            id: z.ZodString;
+            name: z.ZodNullable<z.ZodString>;
+        }, z.core.$strip>>;
         title: z.ZodString;
         description: z.ZodString;
         location: z.ZodString;

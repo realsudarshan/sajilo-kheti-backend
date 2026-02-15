@@ -5,6 +5,14 @@ import { calculateSqMtr } from '../../lib/converttosqmeter.js';
 import z from 'zod';
 export const landRouter = router({
     publish: publicProcedure
+        .meta({
+        openapi: {
+            method: 'POST',
+            path: '/land/publish',
+            tags: ['Land'],
+            summary: 'Publish a new land listing',
+        },
+    })
         .input(publishLandInputSchema)
         .output(publishLandResponseSchema)
         .mutation(async ({ ctx, input }) => {
@@ -25,6 +33,14 @@ export const landRouter = router({
         });
     }),
     acceptLand: adminProcedure
+        .meta({
+        openapi: {
+            method: 'POST',
+            path: '/land/accept',
+            tags: ['Land Admin'],
+            summary: 'Accept and verify a land listing',
+        },
+    })
         .input(z.object({ landId: z.string() }))
         .mutation(async ({ ctx, input }) => {
         return await ctx.prisma.land.update({
@@ -33,6 +49,14 @@ export const landRouter = router({
         });
     }),
     rejectLand: adminProcedure
+        .meta({
+        openapi: {
+            method: 'POST',
+            path: '/land/reject',
+            tags: ['Land Admin'],
+            summary: 'Reject a land listing',
+        },
+    })
         .input(z.object({ landId: z.string() }))
         .mutation(async ({ ctx, input }) => {
         return await ctx.prisma.land.update({
@@ -41,15 +65,17 @@ export const landRouter = router({
         });
     }),
     search: publicProcedure
+        .meta({
+        openapi: {
+            method: 'GET',
+            path: '/land/search',
+            tags: ['Land'],
+            summary: 'Search for available lands',
+        },
+    })
         .input(searchLandInputSchema)
         .output(searchLandResponseSchema)
         .query(async ({ ctx, input }) => {
-        console.log("Search Input:", input);
-        //show the types of input fields      console.log("Input Types:", {
-        console.log("location:", typeof input.location);
-        console.log("minPrice:", typeof input.minPrice);
-        console.log("maxSize:", typeof input.maxSize);
-        console.log("minSize:", typeof input.minSize);
         const where = {
             status: 'AVAILABLE'
         };
@@ -63,20 +89,26 @@ export const landRouter = router({
             };
         }
         if (input.minSize !== undefined || input.maxSize !== undefined) {
-            where.sizeInSqFt = {
+            where.sizeInSqmeter = {
                 ...(input.minSize !== undefined && { gte: input.minSize }),
                 ...(input.maxSize !== undefined && { lte: input.maxSize }),
             };
         }
-        console.log("Constructed Where Clause:", where);
         const lands = await ctx.prisma.land.findMany({
             where,
             orderBy: { createdAt: 'desc' },
         });
-        console.log("Found Lands:", lands);
         return { lands };
     }),
     getById: publicProcedure
+        .meta({
+        openapi: {
+            method: 'GET',
+            path: '/land/{landId}',
+            tags: ['Land'],
+            summary: 'Get land details by ID',
+        },
+    })
         .input(getLandByIdInputSchema)
         .output(landSchema)
         .query(async ({ ctx, input }) => {
@@ -88,6 +120,14 @@ export const landRouter = router({
         return land;
     }),
     updateStatus: adminProcedure
+        .meta({
+        openapi: {
+            method: 'POST',
+            path: '/land/update-status',
+            tags: ['Land Admin'],
+            summary: 'Manually update land status',
+        },
+    })
         .input(updateLandStatusInputSchema)
         .output(updateLandStatusResponseSchema)
         .mutation(async ({ ctx, input }) => {
@@ -98,14 +138,20 @@ export const landRouter = router({
         return { id: updated.id, status: updated.status };
     }),
     getAllLandsAdmin: adminProcedure
+        .meta({
+        openapi: {
+            method: 'GET',
+            path: '/land/admin/all',
+            tags: ['Land Admin'],
+            summary: 'Get all lands with status filters for Admin',
+        },
+    })
         .input(z.object({
         status: z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']).optional()
-    }).optional()) // Make the whole input optional too
+    }).optional())
         .query(async ({ ctx, input }) => {
         try {
-            // Build the filter safely
             const where = {};
-            // Only apply status filter if it exists and isn't a "placeholder" string
             if (input?.status) {
                 where.status = input.status;
             }
@@ -124,7 +170,6 @@ export const landRouter = router({
             return lands;
         }
         catch (error) {
-            console.error("Database Error in getAllLandsAdmin:", error);
             throw new TRPCError({
                 code: 'INTERNAL_SERVER_ERROR',
                 message: 'Failed to fetch lands for admin',

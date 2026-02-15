@@ -24,6 +24,10 @@ export const LandSizeSchema = z.discriminatedUnion("system", [
 export const landSchema = z.object({
     id: z.string(),
     ownerId: z.string(),
+    owner: z.object({
+        id: z.string(),
+        name: z.string().nullable(),
+    }).optional(),
     title: z.string(),
     description: z.string(),
     location: z.string(),

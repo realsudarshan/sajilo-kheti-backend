@@ -57,7 +57,6 @@ export const landRouter = router({
     .output(searchLandResponseSchema)
     .query(async ({ ctx, input }) => {
       console.log("Search Input:", input);
-       //show the types of input fields      console.log("Input Types:", {
        
        console.log("location:", typeof input.location);
         console.log("minPrice:", typeof input.minPrice);
@@ -77,8 +76,9 @@ export const landRouter = router({
           ...(input.maxPrice !== undefined && { lte: input.maxPrice }),
         };
       }
-      if (input.minSize !== undefined || input.maxSize !== undefined) {
-        where.sizeInSqFt = {
+     if (input.minSize !== undefined || input.maxSize !== undefined) {
+        
+        where.sizeInSqmeter = {
           ...(input.minSize !== undefined && { gte: input.minSize }),
           ...(input.maxSize !== undefined && { lte: input.maxSize }),
         };
