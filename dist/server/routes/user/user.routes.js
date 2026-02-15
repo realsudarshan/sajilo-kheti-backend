@@ -1,5 +1,6 @@
 import { clerkClient } from '@clerk/express';
 import { TRPCError } from '@trpc/server';
+import { z } from 'zod'; // Added for .output(z.any())
 import { createUserInputSchema, createUserResponseSchema, getAllUsersResponseSchema, updateKycStatusInputSchema, updateKycStatusResponseSchema, upgradeRequestInputSchema, upgradeRequestResponseSchema, } from '../../models/user.models.js';
 import { adminProcedure, protectedProcedure, publicProcedure, router, } from '../../trpc.js';
 export const userRouter = router({
@@ -133,6 +134,7 @@ export const userRouter = router({
             summary: 'Get current user KYC details',
         },
     })
+        .output(z.any()) // Required for OpenAPI generation
         .query(async ({ ctx }) => {
         const kyc = await ctx.prisma.kycDetail.findUnique({
             where: { userId: ctx.user.id },
@@ -151,6 +153,7 @@ export const userRouter = router({
             summary: 'Get all KYC applications (Admin)',
         },
     })
+        .output(z.any()) // Required for OpenAPI generation
         .query(async ({ ctx }) => {
         const kycDetails = await ctx.prisma.kycDetail.findMany({
             include: {
@@ -186,6 +189,7 @@ export const userRouter = router({
             summary: 'Get full profile of the logged-in user',
         },
     })
+        .output(z.any()) // Required for OpenAPI generation
         .query(async ({ ctx }) => {
         const user = await ctx.prisma.user.findUnique({
             where: { id: ctx.user.id },

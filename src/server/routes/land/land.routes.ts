@@ -12,8 +12,17 @@ import {
 } from '../../models/land.models.js';
 import { calculateSqMtr } from '../../lib/converttosqmeter.js';
 import z from 'zod';
+
 export const landRouter = router({
   publish: publicProcedure
+    .meta({
+      openapi: {
+        method: 'POST',
+        path: '/land/publish',
+        tags: ['Land'],
+        summary: 'Publish a new land listing',
+      },
+    })
     .input(publishLandInputSchema)
     .output(publishLandResponseSchema)
     .mutation(async ({ ctx, input }) => {
@@ -25,47 +34,67 @@ export const landRouter = router({
           title: input.title,
           description: input.description,
           location: input.location,
-          sizeInSqmeter:totalSqmeter,
+          sizeInSqmeter: totalSqmeter,
           pricePerMonth: input.price,
           heroImageUrl: input.landpic,
           galleryUrls: input.morelandpic,
           lalpurjaUrl: input.lalpurjaUrl ?? null,
-          status:'UNVERIFIED',
+          status: 'UNVERIFIED',
         },
       });
     }),
-    acceptLand: adminProcedure
+
+  acceptLand: adminProcedure
+    .meta({
+      openapi: {
+        method: 'POST',
+        path: '/land/accept',
+        tags: ['Land Admin'],
+        summary: 'Accept and verify a land listing',
+      },
+    })
     .input(z.object({ landId: z.string() }))
+    .output(z.any()) // Required for OpenAPI
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.land.update({
         where: { id: input.landId },
         data: { status: 'AVAILABLE' },
       });
     }),
-    rejectLand: adminProcedure
+
+  rejectLand: adminProcedure
+    .meta({
+      openapi: {
+        method: 'POST',
+        path: '/land/reject',
+        tags: ['Land Admin'],
+        summary: 'Reject a land listing',
+      },
+    })
     .input(z.object({ landId: z.string() }))
+    .output(z.any()) // Required for OpenAPI
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.land.update({
         where: { id: input.landId },
         data: { status: 'REJECTED' },
       });
     }),
-    
 
   search: publicProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/land/search',
+        tags: ['Land'],
+        summary: 'Search for available lands',
+      },
+    })
     .input(searchLandInputSchema)
     .output(searchLandResponseSchema)
     .query(async ({ ctx, input }) => {
-      console.log("Search Input:", input);
-       
-       console.log("location:", typeof input.location);
-        console.log("minPrice:", typeof input.minPrice);
-        console.log("maxSize:", typeof input.maxSize);
-        console.log("minSize:", typeof input.minSize);
-
       const where: any = {
-      status: 'AVAILABLE' 
-    };
+        status: 'AVAILABLE'
+      };
 
       if (input.location) {
         where.location = { contains: input.location, mode: 'insensitive' };
@@ -76,23 +105,29 @@ export const landRouter = router({
           ...(input.maxPrice !== undefined && { lte: input.maxPrice }),
         };
       }
-     if (input.minSize !== undefined || input.maxSize !== undefined) {
-        
+      if (input.minSize !== undefined || input.maxSize !== undefined) {
         where.sizeInSqmeter = {
           ...(input.minSize !== undefined && { gte: input.minSize }),
           ...(input.maxSize !== undefined && { lte: input.maxSize }),
         };
       }
-console.log("Constructed Where Clause:", where);
+
       const lands = await ctx.prisma.land.findMany({
         where,
         orderBy: { createdAt: 'desc' },
       });
-console.log("Found Lands:", lands);
       return { lands };
     }),
 
   getById: publicProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/land/{landId}',
+        tags: ['Land'],
+        summary: 'Get land details by ID',
+      },
+    })
     .input(getLandByIdInputSchema)
     .output(landSchema)
     .query(async ({ ctx, input }) => {
@@ -102,9 +137,16 @@ console.log("Found Lands:", lands);
       if (!land) throw new TRPCError({ code: 'NOT_FOUND', message: 'Land not found' });
       return land;
     }),
-    
 
   updateStatus: adminProcedure
+    .meta({
+      openapi: {
+        method: 'POST',
+        path: '/land/update-status',
+        tags: ['Land Admin'],
+        summary: 'Manually update land status',
+      },
+    })
     .input(updateLandStatusInputSchema)
     .output(updateLandStatusResponseSchema)
     .mutation(async ({ ctx, input }) => {
@@ -114,40 +156,47 @@ console.log("Found Lands:", lands);
       });
       return { id: updated.id, status: updated.status };
     }),
-    getAllLandsAdmin: adminProcedure
-  .input(z.object({
-    status: z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']).optional()
-  }).optional()) // Make the whole input optional too
-  .query(async ({ ctx, input }) => {
-    try {
-      // Build the filter safely
-      const where: any = {};
-      
-      // Only apply status filter if it exists and isn't a "placeholder" string
-      if (input?.status) {
-        where.status = input.status;
-      }
 
-      const lands = await ctx.prisma.land.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        include: { 
-          owner: {
-            select: {
-              id: true,
-              name: true,
-            }
-          } 
+  getAllLandsAdmin: adminProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/land/admin/all',
+        tags: ['Land Admin'],
+        summary: 'Get all lands for Admin with optional status filter',
+      },
+    })
+    .input(z.object({
+      status: z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']).optional()
+    }).optional())
+    .output(z.any()) // Required for OpenAPI
+    .query(async ({ ctx, input }) => {
+      try {
+        const where: any = {};
+        if (input?.status) {
+          where.status = input.status;
         }
-      });
 
-      return lands;
-    } catch (error) {
-      console.error("Database Error in getAllLandsAdmin:", error);
-      throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch lands for admin',
-      });
-    }
-  }),
+        const lands = await ctx.prisma.land.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            owner: {
+              select: {
+                id: true,
+                name: true,
+              }
+            }
+          }
+        });
+
+        return lands;
+      } catch (error) {
+        console.error("Database Error in getAllLandsAdmin:", error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch lands for admin',
+        });
+      }
+    }),
 });

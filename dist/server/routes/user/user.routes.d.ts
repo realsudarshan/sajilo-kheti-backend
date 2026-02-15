@@ -70,83 +70,17 @@ export declare const userRouter: import("@trpc/server").TRPCBuiltRouter<{
     }>;
     getKycDetails: import("@trpc/server").TRPCQueryProcedure<{
         input: void;
-        output: {
-            id: string;
-            status: string;
-            userId: string;
-            citizenshipNumber: string;
-            documentUrl: string;
-            selfieUrl: string | null;
-        } | null;
+        output: any;
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
     getAllKycDetails: import("@trpc/server").TRPCQueryProcedure<{
         input: void;
-        output: {
-            kycDetails: {
-                userName: string;
-                userEmail: string;
-                user: {
-                    id: string;
-                    role: import("@prisma/client").$Enums.UserRole;
-                    isKycVerified: boolean;
-                };
-                id: string;
-                status: string;
-                userId: string;
-                citizenshipNumber: string;
-                documentUrl: string;
-                selfieUrl: string | null;
-            }[];
-        };
+        output: any;
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
     getMe: import("@trpc/server").TRPCQueryProcedure<{
         input: void;
-        output: {
-            kycDetails: {
-                id: string;
-                status: string;
-                userId: string;
-                citizenshipNumber: string;
-                documentUrl: string;
-                selfieUrl: string | null;
-            } | null;
-            lands: {
-                id: string;
-                status: import("@prisma/client").$Enums.LandStatus;
-                createdAt: Date;
-                updatedAt: Date;
-                description: string;
-                ownerId: string;
-                title: string;
-                location: string;
-                sizeInSqmeter: number;
-                pricePerMonth: number;
-                heroImageUrl: string;
-                galleryUrls: string[];
-                lalpurjaUrl: string | null;
-            }[];
-            applications: {
-                id: string;
-                status: import("@prisma/client").$Enums.ApplicationStatus;
-                createdAt: Date;
-                landId: string;
-                leaserId: string;
-                plans: string;
-                leaseDurationInMonths: number;
-                proposedMonthlyRent: number;
-                chatChannelId: string | null;
-                additionalMessages: string | null;
-            }[];
-        } & {
-            id: string;
-            name: string | null;
-            role: import("@prisma/client").$Enums.UserRole;
-            isKycVerified: boolean;
-            createdAt: Date;
-            updatedAt: Date;
-        };
+        output: any;
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
 }>>;

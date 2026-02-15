@@ -22,21 +22,43 @@ const openApiDocument = generateOpenApiDocument(appRouter, {
     baseUrl: 'http://localhost:8000/api',
     title: 'Land Lease API',
     version: '1.0.0',
+    // This adds the "Authorize" button to Swagger for Clerk JWTs
+    securitySchemes: {
+        bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+        },
+    },
 });
-// 2. REST API Endpoint (via trpc-to-openapi)
+// 2. Write OpenAPI Spec to file (openapi.json)
+try {
+    await fs.writeFile('./openapi.json', JSON.stringify(openApiDocument, null, 2), 'utf-8');
+    console.log('✅ openapi.json has been generated and saved.');
+}
+catch (error) {
+    console.error('❌ Error writing openapi.json:', error);
+}
+// 3. REST API Endpoint (via trpc-to-openapi)
 app.use('/api', createOpenApiExpressMiddleware({
     router: appRouter,
     createContext,
 }));
-// 3. Standard tRPC Endpoint
+// 4. Standard tRPC Endpoint
 app.use('/trpc', trpcExpress.createExpressMiddleware({
     router: appRouter,
     createContext,
 }));
-// 4. Swagger UI
+// 5. Swagger UI
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
-app.listen(8000, () => {
-    console.log('🚀 Server running on http://localhost:8000');
-    console.log('📖 Swagger docs at http://localhost:8000/docs');
+// Optional: Serve the JSON file directly at a route
+app.get('/openapi.json', (req, res) => {
+    res.json(openApiDocument);
+});
+const PORT = 8000;
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📖 Swagger docs at http://localhost:${PORT}/docs`);
+    console.log(`📄 Raw OpenAPI JSON at http://localhost:${PORT}/openapi.json`);
 });
 //# sourceMappingURL=index.js.map

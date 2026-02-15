@@ -63,42 +63,14 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
         input: {
             landId: string;
         };
-        output: {
-            id: string;
-            status: import("@prisma/client").$Enums.LandStatus;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string;
-            ownerId: string;
-            title: string;
-            location: string;
-            sizeInSqmeter: number;
-            pricePerMonth: number;
-            heroImageUrl: string;
-            galleryUrls: string[];
-            lalpurjaUrl: string | null;
-        };
+        output: any;
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
     rejectLand: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             landId: string;
         };
-        output: {
-            id: string;
-            status: import("@prisma/client").$Enums.LandStatus;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string;
-            ownerId: string;
-            title: string;
-            location: string;
-            sizeInSqmeter: number;
-            pricePerMonth: number;
-            heroImageUrl: string;
-            galleryUrls: string[];
-            lalpurjaUrl: string | null;
-        };
+        output: any;
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
     search: import("@trpc/server").TRPCQueryProcedure<{
@@ -172,26 +144,7 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
         input: {
             status?: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN" | undefined;
         } | undefined;
-        output: ({
-            owner: {
-                id: string;
-                name: string | null;
-            };
-        } & {
-            id: string;
-            status: import("@prisma/client").$Enums.LandStatus;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string;
-            ownerId: string;
-            title: string;
-            location: string;
-            sizeInSqmeter: number;
-            pricePerMonth: number;
-            heroImageUrl: string;
-            galleryUrls: string[];
-            lalpurjaUrl: string | null;
-        })[];
+        output: any;
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
 }>>;

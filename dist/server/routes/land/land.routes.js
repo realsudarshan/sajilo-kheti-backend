@@ -42,6 +42,7 @@ export const landRouter = router({
         },
     })
         .input(z.object({ landId: z.string() }))
+        .output(z.any()) // Required for OpenAPI
         .mutation(async ({ ctx, input }) => {
         return await ctx.prisma.land.update({
             where: { id: input.landId },
@@ -58,6 +59,7 @@ export const landRouter = router({
         },
     })
         .input(z.object({ landId: z.string() }))
+        .output(z.any()) // Required for OpenAPI
         .mutation(async ({ ctx, input }) => {
         return await ctx.prisma.land.update({
             where: { id: input.landId },
@@ -143,12 +145,13 @@ export const landRouter = router({
             method: 'GET',
             path: '/land/admin/all',
             tags: ['Land Admin'],
-            summary: 'Get all lands with status filters for Admin',
+            summary: 'Get all lands for Admin with optional status filter',
         },
     })
         .input(z.object({
         status: z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']).optional()
     }).optional())
+        .output(z.any()) // Required for OpenAPI
         .query(async ({ ctx, input }) => {
         try {
             const where = {};
@@ -170,6 +173,7 @@ export const landRouter = router({
             return lands;
         }
         catch (error) {
+            console.error("Database Error in getAllLandsAdmin:", error);
             throw new TRPCError({
                 code: 'INTERNAL_SERVER_ERROR',
                 message: 'Failed to fetch lands for admin',

@@ -1,6 +1,7 @@
 import { clerkClient } from '@clerk/express';
 import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
+import { z } from 'zod'; // Added for .output(z.any())
 import {
   createUserInputSchema,
   createUserResponseSchema,
@@ -19,6 +20,14 @@ import {
 
 export const userRouter = router({
   getAllUser: adminProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/users/all',
+        tags: ['Users'],
+        summary: 'Get all users with hydrated Clerk data',
+      },
+    })
     .output(getAllUsersResponseSchema)
     .query(async ({ ctx }) => {
       const users = await ctx.prisma.user.findMany({
@@ -37,7 +46,6 @@ export const userRouter = router({
 
         return {
           ...dbUser,
-          // Extract specific fields from Clerk
           email: clerkInfo?.emailAddresses[0]?.emailAddress ?? 'No email',
           name: `${clerkInfo?.firstName ?? ''} ${clerkInfo?.lastName ?? ''}`.trim() || 'Unnamed',
           imageUrl: clerkInfo?.imageUrl,
@@ -48,6 +56,14 @@ export const userRouter = router({
     }),
 
   createUser: publicProcedure
+    .meta({
+      openapi: {
+        method: 'POST',
+        path: '/users/create',
+        tags: ['Users'],
+        summary: 'Create or upsert a new user',
+      },
+    })
     .input(createUserInputSchema)
     .output(createUserResponseSchema)
     .mutation(async ({ ctx, input }) => {
@@ -62,6 +78,14 @@ export const userRouter = router({
     }),
 
   upgradeRequest: protectedProcedure
+    .meta({
+      openapi: {
+        method: 'POST',
+        path: '/users/upgrade-request',
+        tags: ['KYC'],
+        summary: 'Submit a KYC upgrade request',
+      },
+    })
     .input(upgradeRequestInputSchema)
     .output(upgradeRequestResponseSchema)
     .mutation(async ({ ctx, input }) => {
@@ -84,6 +108,14 @@ export const userRouter = router({
     }),
 
   updateKycStatus: adminProcedure
+    .meta({
+      openapi: {
+        method: 'POST',
+        path: '/users/update-kyc-status',
+        tags: ['KYC'],
+        summary: 'Approve or Reject KYC status (Admin)',
+      },
+    })
     .input(updateKycStatusInputSchema)
     .output(updateKycStatusResponseSchema)
     .mutation(async ({ ctx, input }) => {
@@ -105,7 +137,6 @@ export const userRouter = router({
           where: { id: input.userId },
           data: {
             isKycVerified: input.status === 'APPROVED',
-            // Explicitly setting role to satisfy strict TS check
             role: input.status === 'APPROVED' ? 'OWNER' : 'LEASER',
           },
         });
@@ -118,15 +149,23 @@ export const userRouter = router({
         };
       });
     }),
+
   getKycDetails: protectedProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/users/kyc-details',
+        tags: ['KYC'],
+        summary: 'Get current user KYC details',
+      },
+    })
+    .output(z.any()) // Required for OpenAPI generation
     .query(async ({ ctx }) => {
       const kyc = await ctx.prisma.kycDetail.findUnique({
         where: { userId: ctx.user.id },
       });
 
       if (!kyc) {
-        // We return null instead of throwing an error so the frontend 
-        // can easily check "if (!data) showUploadForm()"
         return null;
       }
 
@@ -134,6 +173,15 @@ export const userRouter = router({
     }),
 
   getAllKycDetails: adminProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/users/all-kyc',
+        tags: ['KYC'],
+        summary: 'Get all KYC applications (Admin)',
+      },
+    })
+    .output(z.any()) // Required for OpenAPI generation
     .query(async ({ ctx }) => {
       const kycDetails = await ctx.prisma.kycDetail.findMany({
         include: {
@@ -147,7 +195,6 @@ export const userRouter = router({
         },
       });
 
-      // Hydrate with Clerk data
       const userIds = kycDetails.map(kyc => kyc.userId);
       const clerkUsers = await clerkClient.users.getUserList({
         userId: userIds,
@@ -165,15 +212,24 @@ export const userRouter = router({
 
       return { kycDetails: hydratedKycDetails };
     }),
-    getMe: protectedProcedure
+
+  getMe: protectedProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/users/me',
+        tags: ['Users'],
+        summary: 'Get full profile of the logged-in user',
+      },
+    })
+    .output(z.any()) // Required for OpenAPI generation
     .query(async ({ ctx }) => {
-      // Fetch the full document including all relations defined in your schema
       const user = await ctx.prisma.user.findUnique({
         where: { id: ctx.user.id },
         include: {
-          kycDetails: true,    // Details from the kycDetail model
-          lands: true,         // Array of lands owned by this user
-          applications: true,  // Array of applications made by this user
+          kycDetails: true,
+          lands: true,
+          applications: true,
         },
       });
 
