@@ -16,6 +16,10 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
             ownerId: string;
             title: string;
             location: string;
+            coordinates: {
+                lat: number;
+                lng: number;
+            };
             size: {
                 system: "HILLY";
                 ropani?: number | undefined;
@@ -35,8 +39,8 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
             price: number;
             description: string;
             landpic: string;
+            lalpurjaUrl: string;
             morelandpic?: string[] | undefined;
-            lalpurjaUrl?: string | undefined;
         };
         output: {
             id: string;

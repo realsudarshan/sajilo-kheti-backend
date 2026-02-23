@@ -16,6 +16,7 @@ export const landRouter = router({
         .input(publishLandInputSchema)
         .output(publishLandResponseSchema)
         .mutation(async ({ ctx, input }) => {
+        // Logic to convert Ropani/Bigha to Sq Meter
         const totalSqmeter = calculateSqMtr(input.size);
         return await ctx.prisma.land.create({
             data: {
@@ -23,12 +24,15 @@ export const landRouter = router({
                 title: input.title,
                 description: input.description,
                 location: input.location,
+                // Mapping coordinates from input
+                latitude: input.coordinates.lat,
+                longitude: input.coordinates.lng,
                 sizeInSqmeter: totalSqmeter,
                 pricePerMonth: input.price,
                 heroImageUrl: input.landpic,
                 galleryUrls: input.morelandpic,
                 lalpurjaUrl: input.lalpurjaUrl ?? null,
-                status: 'UNVERIFIED',
+                status: 'UNVERIFIED', // Matching your Prisma model default
             },
         });
     }),

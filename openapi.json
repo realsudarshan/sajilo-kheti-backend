@@ -746,11 +746,26 @@
                   },
                   "title": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 5
                   },
                   "location": {
                     "type": "string",
                     "minLength": 1
+                  },
+                  "coordinates": {
+                    "type": "object",
+                    "properties": {
+                      "lat": {
+                        "type": "number"
+                      },
+                      "lng": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "lat",
+                      "lng"
+                    ]
                   },
                   "size": {
                     "oneOf": [
@@ -852,7 +867,7 @@
                   },
                   "description": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 20
                   },
                   "landpic": {
                     "type": "string",
@@ -867,17 +882,20 @@
                     }
                   },
                   "lalpurjaUrl": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "uri"
                   }
                 },
                 "required": [
                   "ownerId",
                   "title",
                   "location",
+                  "coordinates",
                   "size",
                   "price",
                   "description",
-                  "landpic"
+                  "landpic",
+                  "lalpurjaUrl"
                 ]
               }
             }

@@ -56,6 +56,10 @@ export declare const publishLandInputSchema: z.ZodObject<{
     ownerId: z.ZodString;
     title: z.ZodString;
     location: z.ZodString;
+    coordinates: z.ZodObject<{
+        lat: z.ZodNumber;
+        lng: z.ZodNumber;
+    }, z.core.$strip>;
     size: z.ZodDiscriminatedUnion<[z.ZodObject<{
         system: z.ZodLiteral<"HILLY">;
         ropani: z.ZodDefault<z.ZodNumber>;
@@ -78,8 +82,8 @@ export declare const publishLandInputSchema: z.ZodObject<{
     price: z.ZodNumber;
     description: z.ZodString;
     landpic: z.ZodString;
-    morelandpic: z.ZodDefault<z.ZodOptional<z.ZodArray<z.ZodString>>>;
-    lalpurjaUrl: z.ZodOptional<z.ZodString>;
+    morelandpic: z.ZodDefault<z.ZodArray<z.ZodString>>;
+    lalpurjaUrl: z.ZodString;
 }, z.core.$strip>;
 export declare const publishLandResponseSchema: z.ZodObject<{
     id: z.ZodString;

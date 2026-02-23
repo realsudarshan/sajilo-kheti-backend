@@ -10,10 +10,6 @@ export const router = t.router;
 export const publicProcedure = t.procedure;
 
 
-
-
-
-
 // 1. The PROTECTED procedure that "fixes" the null error
 const isAuthed = t.middleware(({ ctx, next }) => {
   // Check if they exist

@@ -17,6 +17,10 @@ app.use(cors({
 app.use(express.json());
 // Clerk middleware MUST be before trpc/openapi
 app.use(clerkMiddleware());
+// Add this right before app.listen
+app.get('/', (req, res) => {
+    res.send('🏠 Land Lease Backend is Running!');
+});
 // 1. Generate OpenAPI Spec
 const openApiDocument = generateOpenApiDocument(appRouter, {
     baseUrl: 'http://localhost:8000/api',

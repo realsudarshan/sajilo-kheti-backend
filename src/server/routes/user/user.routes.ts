@@ -213,33 +213,43 @@ export const userRouter = router({
       return { kycDetails: hydratedKycDetails };
     }),
 
-  getMe: protectedProcedure
-    .meta({
-      openapi: {
-        method: 'GET',
-        path: '/users/me',
-        tags: ['Users'],
-        summary: 'Get full profile of the logged-in user',
+ getMe: protectedProcedure
+  .meta({
+    openapi: {
+      method: 'GET',
+      path: '/users/me',
+      tags: ['Users'],
+      summary: 'Get full profile of the logged-in user',
+    },
+  })
+  .output(z.any())
+  .query(async ({ ctx }) => {
+    // 1. Try to find the user with all relations
+    let user = await ctx.prisma.user.findUnique({
+      where: { id: ctx.user.id },
+      include: {
+        kycDetails: true,
+        lands: true,
+        applications: true,
       },
-    })
-    .output(z.any()) // Required for OpenAPI generation
-    .query(async ({ ctx }) => {
-      const user = await ctx.prisma.user.findUnique({
-        where: { id: ctx.user.id },
+    });
+
+    // 2. If user is NOT in MongoDB yet, create them immediately
+    if (!user) {
+      console.log(`User ${ctx.user.id} not found, creating record...`);
+      user = await ctx.prisma.user.create({
+        data: {
+          id: ctx.user.id,
+          role: 'LEASER', // Default role
+        },
         include: {
           kycDetails: true,
           lands: true,
           applications: true,
         },
       });
+    }
 
-      if (!user) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'User profile not found in MongoDB.',
-        });
-      }
-
-      return user;
-    }),
+    return user;
+  }),
 });

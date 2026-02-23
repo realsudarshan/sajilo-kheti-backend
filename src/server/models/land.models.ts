@@ -45,15 +45,29 @@ export const landSchema = z.object({
 });
 
 export const publishLandInputSchema = z.object({
-  ownerId: z.string().min(1),
-  title: z.string().min(1),
-  location: z.string().min(1),
+  ownerId: z.string().min(1, "Owner ID is required"),
+  title: z.string().min(5, "Title must be at least 5 characters"),
+  location: z.string().min(1, "Location address is required"),
+  
+  // Added Coordinates for the Map
+  coordinates: z.object({
+    lat: z.number(),
+    lng: z.number(),
+  }),
+  
   size: LandSizeSchema,
-  price: z.number().positive(),
-  description: z.string().min(1),
-  landpic: z.string().url(),
-  morelandpic: z.array(z.string().url()).optional().default([]),
-  lalpurjaUrl: z.string().optional(),
+  
+  // Total Price (Simple Pricing)
+  price: z.number().positive("Price must be a positive number"),
+  
+  description: z.string().min(20, "Description should be more detailed"),
+  
+  // Image URLs (from UploadThing)
+  landpic: z.string().url("Main image must be a valid URL"),
+  morelandpic: z.array(z.string().url()).default([]),
+  
+  // Lalpurja is usually required for trust in Nepal
+  lalpurjaUrl: z.string().url("Lalpurja URL must be valid"),
 });
 
 export const publishLandResponseSchema = landSchema;
