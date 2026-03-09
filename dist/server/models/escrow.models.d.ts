@@ -4,7 +4,7 @@ export declare const payEscrowInputSchema: z.ZodObject<{
     amount: z.ZodNumber;
     paymentId: z.ZodString;
     commission: z.ZodNumber;
-}, z.core.$strip>;
+}, z.z.core.$strip>;
 export declare const payEscrowResponseSchema: z.ZodObject<{
     success: z.ZodBoolean;
     message: z.ZodString;
@@ -17,7 +17,7 @@ export declare const payEscrowResponseSchema: z.ZodObject<{
             RELEASED: "RELEASED";
             REFUNDED: "REFUNDED";
         }>;
-    }, z.core.$strip>;
+    }, z.z.core.$strip>;
     landStatus: z.ZodEnum<{
         AVAILABLE: "AVAILABLE";
         UNVERIFIED: "UNVERIFIED";
@@ -26,12 +26,12 @@ export declare const payEscrowResponseSchema: z.ZodObject<{
         LEASED: "LEASED";
         HIDDEN: "HIDDEN";
     }>;
-}, z.core.$strip>;
+}, z.z.core.$strip>;
 export declare const verifyMalpotPapersInputSchema: z.ZodObject<{
     applicationId: z.ZodString;
     malpotPaperUrl: z.ZodString;
     adminId: z.ZodString;
-}, z.core.$strip>;
+}, z.z.core.$strip>;
 export declare const verifyMalpotPapersResponseSchema: z.ZodObject<{
     success: z.ZodBoolean;
     message: z.ZodString;
@@ -43,7 +43,7 @@ export declare const verifyMalpotPapersResponseSchema: z.ZodObject<{
             ACCEPTED: "ACCEPTED";
             COMPLETED: "COMPLETED";
         }>;
-    }, z.core.$strip>;
+    }, z.z.core.$strip>;
     landStatus: z.ZodEnum<{
         AVAILABLE: "AVAILABLE";
         UNVERIFIED: "UNVERIFIED";
@@ -57,5 +57,5 @@ export declare const verifyMalpotPapersResponseSchema: z.ZodObject<{
         RELEASED: "RELEASED";
         REFUNDED: "REFUNDED";
     }>;
-}, z.core.$strip>;
+}, z.z.core.$strip>;
 //# sourceMappingURL=escrow.models.d.ts.map

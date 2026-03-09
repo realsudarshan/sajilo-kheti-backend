@@ -65,7 +65,7 @@ model KycDetail {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   userId            String   @unique
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  paymentNumber     String
   citizenshipNumber String
   documentUrl       String   // S3/Cloudinary link
   selfieUrl         String?

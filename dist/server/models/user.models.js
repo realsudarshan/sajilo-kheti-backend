@@ -20,6 +20,7 @@ export const createUserInputSchema = z.object({
 });
 export const createUserResponseSchema = UserSchema;
 export const upgradeRequestInputSchema = z.object({
+    paymentnumber: z.string().min(1),
     citizenshipNumber: z.string().min(1),
     documentUrl: z.string().url(),
     selfieUrl: z.string().url().optional(),
@@ -31,6 +32,7 @@ export const upgradeRequestResponseSchema = z.object({
     citizenshipNumber: z.string(),
     documentUrl: z.string(),
     selfieUrl: z.string().nullable(),
+    paymentnumber: z.string()
 });
 export const updateKycStatusInputSchema = z.object({
     userId: z.string(),
