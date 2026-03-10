@@ -43,7 +43,7 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
         input: {
             applicationId: string;
             malpotPaperUrl: string;
-            adminId: string;
+            adminId?: string | undefined;
         };
         output: {
             success: boolean;
@@ -55,6 +55,217 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
             landStatus: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
             escrowStatus: "HOLDING" | "RELEASED" | "REFUNDED";
         };
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
+    SaveChatChannel: import("@trpc/server").TRPCMutationProcedure<{
+        input: {
+            applicationId: string;
+            chatChannelId: string;
+        };
+        output: {
+            success: boolean;
+            message: string;
+        };
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
+    GetMyEscrows: import("@trpc/server").TRPCQueryProcedure<{
+        input: Record<string, never>;
+        output: {
+            escrows: {
+                id: string;
+                applicationId: string;
+                ownerId: string;
+                leaserId: string;
+                amount: number;
+                paymentId: string | null;
+                status: "HOLDING" | "RELEASED" | "REFUNDED";
+                commission: number;
+                chatChannelId: string | null;
+                createdAt: Date;
+                updatedAt: Date;
+                application: {
+                    id: string;
+                    status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+                    leaseDurationInMonths: number;
+                    proposedMonthlyRent: number;
+                    plans: string;
+                    land: {
+                        id: string;
+                        title: string;
+                        location: string;
+                        heroImageUrl: string;
+                        status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                    };
+                };
+                landownerMalpotUrl?: string | null | undefined;
+                landleaserMalpotUrl?: string | null | undefined;
+            }[];
+        };
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
+    GetMyOwnerEscrows: import("@trpc/server").TRPCQueryProcedure<{
+        input: Record<string, never>;
+        output: {
+            escrows: {
+                id: string;
+                applicationId: string;
+                ownerId: string;
+                leaserId: string;
+                amount: number;
+                paymentId: string | null;
+                status: "HOLDING" | "RELEASED" | "REFUNDED";
+                commission: number;
+                chatChannelId: string | null;
+                createdAt: Date;
+                updatedAt: Date;
+                application: {
+                    id: string;
+                    status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+                    leaseDurationInMonths: number;
+                    proposedMonthlyRent: number;
+                    plans: string;
+                    land: {
+                        id: string;
+                        title: string;
+                        location: string;
+                        heroImageUrl: string;
+                        status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                    };
+                };
+                landownerMalpotUrl?: string | null | undefined;
+                landleaserMalpotUrl?: string | null | undefined;
+            }[];
+        };
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
+    GetEscrowById: import("@trpc/server").TRPCQueryProcedure<{
+        input: {
+            id: string;
+        };
+        output: {
+            id: string;
+            amount: number;
+            status: "HOLDING" | "RELEASED" | "REFUNDED";
+            leaserId: string;
+            ownerId: string;
+            applicationId: string;
+            application: {
+                land: {
+                    id: string;
+                    title: string;
+                    location: string;
+                    heroImageUrl: string;
+                };
+            };
+            chatChannelId?: string | null | undefined;
+            landownerMalpotUrl?: string | null | undefined;
+            landleaserMalpotUrl?: string | null | undefined;
+        };
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
+    /**
+   * SUBMIT MALPOT PAPERS
+   * Targets Escrow by ID and identifies the uploader role.
+   */
+    SubmitMalpotPapers: import("@trpc/server").TRPCMutationProcedure<{
+        input: {
+            escrowId: string;
+            malpotPaperUrl: string;
+        };
+        output: {
+            success: boolean;
+            message: string;
+        };
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
+    GetAllEscrowsForAdmin: import("@trpc/server").TRPCQueryProcedure<{
+        input: void;
+        output: ({
+            application: {
+                land: {
+                    title: string;
+                    location: string;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                status: import("@prisma/client").$Enums.ApplicationStatus;
+                chatChannelId: string | null;
+                leaserId: string;
+                leaseDurationInMonths: number;
+                proposedMonthlyRent: number;
+                plans: string;
+                landId: string;
+                additionalMessages: string | null;
+            };
+            owner: {
+                name: string | null;
+            };
+            leaser: {
+                name: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            applicationId: string;
+            amount: number;
+            paymentId: string | null;
+            commission: number;
+            status: import("@prisma/client").$Enums.EscrowStatus;
+            chatChannelId: string | null;
+            ownerId: string;
+            leaserId: string;
+            landownerMalpotUrl: string | null;
+            landleaserMalpotUrl: string | null;
+        })[];
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
+    VerifyLegalDocuments: import("@trpc/server").TRPCMutationProcedure<{
+        input: {
+            escrowId: string;
+            action: "APPROVE" | "REJECT";
+        };
+        output: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            applicationId: string;
+            amount: number;
+            paymentId: string | null;
+            commission: number;
+            status: import("@prisma/client").$Enums.EscrowStatus;
+            chatChannelId: string | null;
+            ownerId: string;
+            leaserId: string;
+            landownerMalpotUrl: string | null;
+            landleaserMalpotUrl: string | null;
+        } | [{
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            applicationId: string;
+            amount: number;
+            paymentId: string | null;
+            commission: number;
+            status: import("@prisma/client").$Enums.EscrowStatus;
+            chatChannelId: string | null;
+            ownerId: string;
+            leaserId: string;
+            landownerMalpotUrl: string | null;
+            landleaserMalpotUrl: string | null;
+        }, {
+            id: string;
+            createdAt: Date;
+            status: import("@prisma/client").$Enums.ApplicationStatus;
+            chatChannelId: string | null;
+            leaserId: string;
+            leaseDurationInMonths: number;
+            proposedMonthlyRent: number;
+            plans: string;
+            landId: string;
+            additionalMessages: string | null;
+        }];
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
 }>>;

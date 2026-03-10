@@ -18,7 +18,7 @@ enum ApplicationStatus {
   PENDING
   ACCEPTED
   REJECTED
-  COMPLETED
+  COMPLETED //after malpot paper is verified and lease is active
 }
 
 enum EscrowStatus {
@@ -137,6 +137,10 @@ model Escrow {
   paymentId      String?
   status         EscrowStatus @default(HOLDING)
   commission     Float
+  chatChannelId          String?  
+  landownerMalpotUrl   String? 
+  landleaserMalpotUrl   String? 
+  
 
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt

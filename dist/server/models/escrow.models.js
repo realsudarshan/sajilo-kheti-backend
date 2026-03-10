@@ -1,10 +1,16 @@
-// Pay Escrow Schemas
-import z from "zod";
+import { z } from "zod";
+// --- ENUMS (Matches Prisma) ---
+const LandStatusEnum = z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']);
+const EscrowStatusEnum = z.enum(['HOLDING', 'RELEASED', 'REFUNDED']);
+const ApplicationStatusEnum = z.enum(['PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED']);
+// ============================================================================
+// STEP 3: PAY ESCROW
+// ============================================================================
 export const payEscrowInputSchema = z.object({
     applicationId: z.string(),
     amount: z.number().positive('Escrow amount must be positive'),
-    paymentId: z.string(), // Reference from Khalti/eSewa
-    commission: z.number().positive('Commission must be positive'),
+    paymentId: z.string(), // Reference from Khalti/eSewa/Fonepay
+    commission: z.number().nonnegative('Commission cannot be negative'),
 });
 export const payEscrowResponseSchema = z.object({
     success: z.boolean(),
@@ -13,26 +19,106 @@ export const payEscrowResponseSchema = z.object({
         id: z.string(),
         applicationId: z.string(),
         amount: z.number(),
-        status: z.enum(['HOLDING', 'RELEASED', 'REFUNDED']),
+        status: EscrowStatusEnum,
     }),
-    // ADD THE MISSING STATUSES HERE:
-    landStatus: z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']),
+    landStatus: LandStatusEnum,
 });
-// Verify Malpot Papers Schemas
+// ============================================================================
+// STEP 4: SUBMIT MALPOT PAPERS (NEW)
+// ============================================================================
+export const submitMalpotPapersInputSchema = z.object({
+    escrowId: z.string(),
+    malpotPaperUrl: z.string().url('Must be a valid URL'),
+});
+export const submitMalpotPapersResponseSchema = z.object({
+    success: z.boolean(),
+    message: z.string(),
+});
+// ============================================================================
+// STEP 5: VERIFY MALPOT PAPERS (ADMIN)
+// ============================================================================
 export const verifyMalpotPapersInputSchema = z.object({
     applicationId: z.string(),
     malpotPaperUrl: z.string().url('Must be a valid URL'),
-    adminId: z.string(), // Admin who is verifying
+    // adminId is usually taken from context (ctx.user.id), but kept if required by your logic
+    adminId: z.string().optional(),
 });
 export const verifyMalpotPapersResponseSchema = z.object({
     success: z.boolean(),
     message: z.string(),
     application: z.object({
         id: z.string(),
-        status: z.enum(['PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED']),
+        status: ApplicationStatusEnum,
     }),
-    // AND HERE:
-    landStatus: z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']),
-    escrowStatus: z.enum(['HOLDING', 'RELEASED', 'REFUNDED']),
+    landStatus: LandStatusEnum,
+    escrowStatus: EscrowStatusEnum,
+});
+// ============================================================================
+// CHAT & UTILS
+// ============================================================================
+export const saveChatChannelInputSchema = z.object({
+    applicationId: z.string(),
+    chatChannelId: z.string(),
+});
+export const saveChatChannelResponseSchema = z.object({
+    success: z.boolean(),
+    message: z.string(),
+});
+// ============================================================================
+// FETCH SCHEMAS
+// ============================================================================
+// Base Escrow Object for lists
+const escrowListItemSchema = z.object({
+    id: z.string(),
+    applicationId: z.string(),
+    ownerId: z.string(),
+    leaserId: z.string(),
+    amount: z.number(),
+    paymentId: z.string().nullable(),
+    status: EscrowStatusEnum,
+    commission: z.number(),
+    chatChannelId: z.string().nullable(),
+    landownerMalpotUrl: z.string().nullable().optional(), // Added
+    landleaserMalpotUrl: z.string().nullable().optional(), // Added
+    createdAt: z.date(),
+    updatedAt: z.date(),
+    application: z.object({
+        id: z.string(),
+        status: ApplicationStatusEnum,
+        leaseDurationInMonths: z.number(),
+        proposedMonthlyRent: z.number(),
+        plans: z.string(),
+        land: z.object({
+            id: z.string(),
+            title: z.string(),
+            location: z.string(),
+            heroImageUrl: z.string(),
+            status: LandStatusEnum,
+        }),
+    }),
+});
+export const getMyEscrowsResponseSchema = z.object({
+    escrows: z.array(escrowListItemSchema),
+});
+export const getMyOwnerEscrowsResponseSchema = getMyEscrowsResponseSchema;
+// Detailed view for the Verification Page
+export const getEscrowByIdResponseSchema = z.object({
+    id: z.string(),
+    amount: z.number(),
+    status: EscrowStatusEnum,
+    leaserId: z.string(),
+    ownerId: z.string(),
+    applicationId: z.string(),
+    chatChannelId: z.string().nullable().optional(),
+    landownerMalpotUrl: z.string().nullable().optional(), // Crucial for UI cards
+    landleaserMalpotUrl: z.string().nullable().optional(), // Crucial for UI cards
+    application: z.object({
+        land: z.object({
+            id: z.string(),
+            title: z.string(),
+            location: z.string(),
+            heroImageUrl: z.string(),
+        }),
+    }),
 });
 //# sourceMappingURL=escrow.models.js.map
