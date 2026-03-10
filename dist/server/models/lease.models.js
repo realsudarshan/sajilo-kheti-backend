@@ -91,4 +91,11 @@ export const getAllApplicationsInputSchema = z.object({
     landId: z.string().optional(),
     leaserId: z.string().optional(),
 });
+export const getMyAcceptedApplicationsInputSchema = z.object({
+    landId: z.string().optional(),
+});
+export const getMyAcceptedApplicationsResponseSchema = z.object({
+    applications: z.array(getApplicationByIdResponseSchema),
+    total: z.number(),
+});
 //# sourceMappingURL=lease.models.js.map

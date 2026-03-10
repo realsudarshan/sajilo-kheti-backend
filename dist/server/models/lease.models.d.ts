@@ -164,4 +164,60 @@ export declare const getAllApplicationsInputSchema: z.ZodObject<{
     landId: z.ZodOptional<z.ZodString>;
     leaserId: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
+export declare const getMyAcceptedApplicationsInputSchema: z.ZodObject<{
+    landId: z.ZodOptional<z.ZodString>;
+}, z.core.$strip>;
+export declare const getMyAcceptedApplicationsResponseSchema: z.ZodObject<{
+    applications: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        landId: z.ZodString;
+        leaserId: z.ZodString;
+        plans: z.ZodString;
+        leaseDurationInMonths: z.ZodNumber;
+        proposedMonthlyRent: z.ZodNumber;
+        status: z.ZodEnum<{
+            REJECTED: "REJECTED";
+            PENDING: "PENDING";
+            ACCEPTED: "ACCEPTED";
+            COMPLETED: "COMPLETED";
+        }>;
+        additionalMessages: z.ZodNullable<z.ZodString>;
+        createdAt: z.ZodDate;
+        land: z.ZodObject<{
+            id: z.ZodString;
+            ownerId: z.ZodString;
+            title: z.ZodString;
+            description: z.ZodString;
+            location: z.ZodString;
+            sizeInSqmeter: z.ZodNumber;
+            pricePerMonth: z.ZodNumber;
+            heroImageUrl: z.ZodString;
+            galleryUrls: z.ZodArray<z.ZodString>;
+            lalpurjaUrl: z.ZodNullable<z.ZodString>;
+            status: z.ZodEnum<{
+                AVAILABLE: "AVAILABLE";
+                UNVERIFIED: "UNVERIFIED";
+                REJECTED: "REJECTED";
+                IN_NEGOTIATION: "IN_NEGOTIATION";
+                LEASED: "LEASED";
+                HIDDEN: "HIDDEN";
+            }>;
+            createdAt: z.ZodDate;
+            updatedAt: z.ZodDate;
+        }, z.core.$strip>;
+        leaser: z.ZodObject<{
+            id: z.ZodString;
+            name: z.ZodNullable<z.ZodString>;
+            role: z.ZodEnum<{
+                LEASER: "LEASER";
+                OWNER: "OWNER";
+                ADMIN: "ADMIN";
+            }>;
+            isKycVerified: z.ZodBoolean;
+            createdAt: z.ZodDate;
+            updatedAt: z.ZodDate;
+        }, z.core.$strip>;
+    }, z.core.$strip>>;
+    total: z.ZodNumber;
+}, z.core.$strip>;
 //# sourceMappingURL=lease.models.d.ts.map

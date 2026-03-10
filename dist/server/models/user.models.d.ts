@@ -48,7 +48,7 @@ export declare const createUserResponseSchema: z.ZodObject<{
     createdAt: z.ZodDate;
 }, z.core.$strip>;
 export declare const upgradeRequestInputSchema: z.ZodObject<{
-    paymentnumber: z.ZodString;
+    paymentNumber: z.ZodString;
     citizenshipNumber: z.ZodString;
     documentUrl: z.ZodString;
     selfieUrl: z.ZodOptional<z.ZodString>;
@@ -60,7 +60,7 @@ export declare const upgradeRequestResponseSchema: z.ZodObject<{
     citizenshipNumber: z.ZodString;
     documentUrl: z.ZodString;
     selfieUrl: z.ZodNullable<z.ZodString>;
-    paymentnumber: z.ZodString;
+    paymentNumber: z.ZodString;
 }, z.core.$strip>;
 export declare const updateKycStatusInputSchema: z.ZodObject<{
     userId: z.ZodString;

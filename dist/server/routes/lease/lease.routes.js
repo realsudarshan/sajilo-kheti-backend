@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { acceptApplicationInputSchema, acceptApplicationResponseSchema, getAllApplicationsInputSchema, getAllApplicationsResponseSchema, getApplicationByIdInputSchema, getApplicationByIdResponseSchema, rejectApplicationInputSchema, rejectApplicationResponseSchema, requestedLeaseInputSchema, requestedLeaseResponseSchema } from '../../models/lease.models.js';
+import { acceptApplicationInputSchema, acceptApplicationResponseSchema, getAllApplicationsInputSchema, getAllApplicationsResponseSchema, getApplicationByIdInputSchema, getApplicationByIdResponseSchema, getMyAcceptedApplicationsInputSchema, getMyAcceptedApplicationsResponseSchema, rejectApplicationInputSchema, rejectApplicationResponseSchema, requestedLeaseInputSchema, requestedLeaseResponseSchema } from '../../models/lease.models.js';
 import { adminProcedure, leaserProcedure, ownerProcedure, protectedProcedure, router } from '../../trpc.js';
 export const leaseRouter = router({
     /**
@@ -179,5 +179,33 @@ export const leaseRouter = router({
         });
         return { applications, total: applications.length };
     }),
+    GetMyAcceptedApplications: leaserProcedure
+        .meta({
+        openapi: {
+            method: 'GET',
+            path: '/lease/my-accepted-applications',
+            description: 'Get all accepted applications for the logged-in leaser'
+        }
+    })
+        .input(getMyAcceptedApplicationsInputSchema)
+        .output(getMyAcceptedApplicationsResponseSchema)
+        .query(async ({ ctx, input }) => {
+        const applications = await ctx.prisma.application.findMany({
+            where: {
+                leaserId: ctx.user.id, // Mandatory: Ensures leasers only see their own data
+                status: 'ACCEPTED', // Filter for accepted applications
+                ...(input.landId && { landId: input.landId }), // Optional land filter
+            },
+            include: {
+                land: true,
+                leaser: true
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+        return {
+            applications,
+            total: applications.length
+        };
+    })
 });
 //# sourceMappingURL=lease.routes.js.map

@@ -41,7 +41,7 @@ export declare const userRouter: import("@trpc/server").TRPCBuiltRouter<{
     }>;
     upgradeRequest: import("@trpc/server").TRPCMutationProcedure<{
         input: {
-            paymentnumber: string;
+            paymentNumber: string;
             citizenshipNumber: string;
             documentUrl: string;
             selfieUrl?: string | undefined;
@@ -53,7 +53,7 @@ export declare const userRouter: import("@trpc/server").TRPCBuiltRouter<{
             citizenshipNumber: string;
             documentUrl: string;
             selfieUrl: string | null;
-            paymentnumber: string;
+            paymentNumber: string;
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;

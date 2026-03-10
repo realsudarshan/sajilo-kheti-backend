@@ -13,6 +13,8 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
 }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
     /**
      * STEP 3: PAY ESCROW
+     * Now delegates to payEscrowService so the same logic
+     * can be called from the Next.js API route too.
      */
     PayEscrow: import("@trpc/server").TRPCMutationProcedure<{
         input: {
@@ -35,7 +37,7 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
     /**
-     * STEP 4: VERIFY MALPOT PAPERS
+     * STEP 4: VERIFY MALPOT PAPERS (Admin)
      */
     VerifyMalpotPapers: import("@trpc/server").TRPCMutationProcedure<{
         input: {

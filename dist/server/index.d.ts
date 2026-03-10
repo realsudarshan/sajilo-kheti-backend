@@ -53,7 +53,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
         }>;
         upgradeRequest: import("@trpc/server").TRPCMutationProcedure<{
             input: {
-                paymentnumber: string;
+                paymentNumber: string;
                 citizenshipNumber: string;
                 documentUrl: string;
                 selfieUrl?: string | undefined;
@@ -65,7 +65,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 citizenshipNumber: string;
                 documentUrl: string;
                 selfieUrl: string | null;
-                paymentnumber: string;
+                paymentNumber: string;
             };
             meta: import("trpc-to-openapi").OpenApiMeta;
         }>;
@@ -358,6 +358,49 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 status?: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED" | undefined;
                 landId?: string | undefined;
                 leaserId?: string | undefined;
+            };
+            output: {
+                applications: {
+                    id: string;
+                    landId: string;
+                    leaserId: string;
+                    plans: string;
+                    leaseDurationInMonths: number;
+                    proposedMonthlyRent: number;
+                    status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+                    additionalMessages: string | null;
+                    createdAt: Date;
+                    land: {
+                        id: string;
+                        ownerId: string;
+                        title: string;
+                        description: string;
+                        location: string;
+                        sizeInSqmeter: number;
+                        pricePerMonth: number;
+                        heroImageUrl: string;
+                        galleryUrls: string[];
+                        lalpurjaUrl: string | null;
+                        status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                        createdAt: Date;
+                        updatedAt: Date;
+                    };
+                    leaser: {
+                        id: string;
+                        name: string | null;
+                        role: "LEASER" | "OWNER" | "ADMIN";
+                        isKycVerified: boolean;
+                        createdAt: Date;
+                        updatedAt: Date;
+                    };
+                }[];
+                total: number;
+            };
+            meta: import("trpc-to-openapi").OpenApiMeta;
+        }>;
+        GetMyAcceptedApplications: import("@trpc/server").TRPCQueryProcedure<{
+            input: {
+                landId?: string | undefined;
             };
             output: {
                 applications: {

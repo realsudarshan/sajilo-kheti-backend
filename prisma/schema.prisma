@@ -56,6 +56,8 @@ model User {
   kycDetails     KycDetail?
   lands          Land[]        @relation("OwnerLands")
   applications   Application[] @relation("LeaserApplications")
+  ownedEscrows  Escrow[]     @relation("OwnerEscrows")
+  leasedEscrows Escrow[]     @relation("LeaserEscrows")
   
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -125,15 +127,21 @@ model Escrow {
   id             String       @id @default(auto()) @map("_id") @db.ObjectId
   applicationId  String       @unique @db.ObjectId
   application    Application  @relation(fields: [applicationId], references: [id])
-  
+
+  ownerId        String
+  owner          User         @relation("OwnerEscrows", fields: [ownerId], references: [id])
+  leaserId       String
+  leaser         User         @relation("LeaserEscrows", fields: [leaserId], references: [id])
+
   amount         Float
-  paymentId      String?      // Reference from Khalti/eSewa
+  paymentId      String?
   status         EscrowStatus @default(HOLDING)
-  commission     Float        
-  
+  commission     Float
+
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 }
+
 
 model LeaseAgreement {
   id              String      @id @default(auto()) @map("_id") @db.ObjectId

@@ -20,7 +20,7 @@ export const createUserInputSchema = z.object({
 });
 export const createUserResponseSchema = UserSchema;
 export const upgradeRequestInputSchema = z.object({
-    paymentnumber: z.string().min(1),
+    paymentNumber: z.string().regex(/^(97|98)\d{8}$/, 'Payment number must be a valid Nepali phone number (e.g. 98XXXXXXXX)'),
     citizenshipNumber: z.string().min(1),
     documentUrl: z.string().url(),
     selfieUrl: z.string().url().optional(),
@@ -32,7 +32,7 @@ export const upgradeRequestResponseSchema = z.object({
     citizenshipNumber: z.string(),
     documentUrl: z.string(),
     selfieUrl: z.string().nullable(),
-    paymentnumber: z.string()
+    paymentNumber: z.string(),
 });
 export const updateKycStatusInputSchema = z.object({
     userId: z.string(),
