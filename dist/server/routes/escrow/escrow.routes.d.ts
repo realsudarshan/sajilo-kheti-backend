@@ -187,37 +187,37 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
                     location: string;
                 };
             } & {
-                id: string;
-                createdAt: Date;
                 status: import("@prisma/client").$Enums.ApplicationStatus;
+                id: string;
                 chatChannelId: string | null;
                 leaserId: string;
+                createdAt: Date;
                 leaseDurationInMonths: number;
                 proposedMonthlyRent: number;
                 plans: string;
                 landId: string;
                 additionalMessages: string | null;
             };
-            owner: {
-                name: string | null;
-            };
             leaser: {
                 name: string | null;
             };
+            owner: {
+                name: string | null;
+            };
         } & {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
             applicationId: string;
             amount: number;
             paymentId: string | null;
             commission: number;
             status: import("@prisma/client").$Enums.EscrowStatus;
+            id: string;
             chatChannelId: string | null;
             ownerId: string;
             leaserId: string;
             landownerMalpotUrl: string | null;
             landleaserMalpotUrl: string | null;
+            createdAt: Date;
+            updatedAt: Date;
         })[];
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
@@ -227,39 +227,39 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
             action: "APPROVE" | "REJECT";
         };
         output: {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
             applicationId: string;
             amount: number;
             paymentId: string | null;
             commission: number;
             status: import("@prisma/client").$Enums.EscrowStatus;
+            id: string;
             chatChannelId: string | null;
             ownerId: string;
             leaserId: string;
             landownerMalpotUrl: string | null;
             landleaserMalpotUrl: string | null;
+            createdAt: Date;
+            updatedAt: Date;
         } | [{
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
             applicationId: string;
             amount: number;
             paymentId: string | null;
             commission: number;
             status: import("@prisma/client").$Enums.EscrowStatus;
+            id: string;
             chatChannelId: string | null;
             ownerId: string;
             leaserId: string;
             landownerMalpotUrl: string | null;
             landleaserMalpotUrl: string | null;
-        }, {
-            id: string;
             createdAt: Date;
+            updatedAt: Date;
+        }, {
             status: import("@prisma/client").$Enums.ApplicationStatus;
+            id: string;
             chatChannelId: string | null;
             leaserId: string;
+            createdAt: Date;
             leaseDurationInMonths: number;
             proposedMonthlyRent: number;
             plans: string;
