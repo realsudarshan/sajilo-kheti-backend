@@ -11,11 +11,6 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
     errorShape: import("@trpc/server").TRPCDefaultErrorShape;
     transformer: false;
 }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
-    /**
-     * STEP 3: PAY ESCROW
-     * Now delegates to payEscrowService so the same logic
-     * can be called from the Next.js API route too.
-     */
     PayEscrow: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             applicationId: string;
@@ -36,9 +31,6 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
-    /**
-     * STEP 4: VERIFY MALPOT PAPERS (Admin)
-     */
     VerifyMalpotPapers: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             applicationId: string;
@@ -163,10 +155,6 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
-    /**
-   * SUBMIT MALPOT PAPERS
-   * Targets Escrow by ID and identifies the uploader role.
-   */
     SubmitMalpotPapers: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             escrowId: string;
@@ -265,7 +253,28 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
             plans: string;
             landId: string;
             additionalMessages: string | null;
+        }, {
+            status: import("@prisma/client").$Enums.LandStatus;
+            id: string;
+            ownerId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            title: string;
+            location: string;
+            heroImageUrl: string;
+            description: string;
+            latitude: number;
+            longitude: number;
+            sizeInSqmeter: number;
+            pricePerMonth: number;
+            galleryUrls: string[];
+            lalpurjaUrl: string;
         }];
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
+    GetAllEscrowsAgreementForAdmin: import("@trpc/server").TRPCQueryProcedure<{
+        input: void;
+        output: any;
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
 }>>;

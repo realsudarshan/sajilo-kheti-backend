@@ -11,10 +11,6 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
     errorShape: import("@trpc/server").TRPCDefaultErrorShape;
     transformer: false;
 }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
-    /**
-     * STEP 1: LEASER SUBMITS APPLICATION
-     * Only accessible by users with 'LEASER' role.
-     */
     Submitapplication: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             landId: string;
@@ -32,10 +28,6 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
-    /**
-     * STEP 2: OWNER ACCEPTS APPLICATION
-     * Only accessible by users with 'OWNER' role.
-     */
     AcceptApplication: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             applicationId: string;
@@ -52,9 +44,6 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
-    /**
-     * STEP 2b: OWNER REJECTS APPLICATION
-     */
     RejectApplication: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             applicationId: string;
@@ -70,17 +59,6 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
-    /**
-     * STEP 3: LEASER PAYS ESCROW
-     * This procedure verifies the Khalti/eSewa transaction and locks the funds.
-     */
-    /**
-     * STEP 4: ADMIN VERIFIES MALPOT PAPERS
-     * Final step to release funds to owner and mark land as LEASED.
-     */
-    /**
-     * DATA QUERIES
-     */
     GetApplicationById: import("@trpc/server").TRPCQueryProcedure<{
         input: {
             applicationId: string;
@@ -169,6 +147,92 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
     GetMyAcceptedApplications: import("@trpc/server").TRPCQueryProcedure<{
         input: {
             landId?: string | undefined;
+        };
+        output: {
+            applications: {
+                id: string;
+                landId: string;
+                leaserId: string;
+                plans: string;
+                leaseDurationInMonths: number;
+                proposedMonthlyRent: number;
+                status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+                additionalMessages: string | null;
+                createdAt: Date;
+                land: {
+                    id: string;
+                    ownerId: string;
+                    title: string;
+                    description: string;
+                    location: string;
+                    sizeInSqmeter: number;
+                    pricePerMonth: number;
+                    heroImageUrl: string;
+                    galleryUrls: string[];
+                    lalpurjaUrl: string | null;
+                    status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                    createdAt: Date;
+                    updatedAt: Date;
+                };
+                leaser: {
+                    id: string;
+                    name: string | null;
+                    role: "LEASER" | "OWNER" | "ADMIN";
+                    isKycVerified: boolean;
+                    createdAt: Date;
+                    updatedAt: Date;
+                };
+            }[];
+            total: number;
+        };
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
+    GetMyLeaserApplications: import("@trpc/server").TRPCQueryProcedure<{
+        input: {
+            status?: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED" | undefined;
+        };
+        output: {
+            applications: {
+                id: string;
+                landId: string;
+                leaserId: string;
+                plans: string;
+                leaseDurationInMonths: number;
+                proposedMonthlyRent: number;
+                status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+                additionalMessages: string | null;
+                createdAt: Date;
+                land: {
+                    id: string;
+                    ownerId: string;
+                    title: string;
+                    description: string;
+                    location: string;
+                    sizeInSqmeter: number;
+                    pricePerMonth: number;
+                    heroImageUrl: string;
+                    galleryUrls: string[];
+                    lalpurjaUrl: string | null;
+                    status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                    createdAt: Date;
+                    updatedAt: Date;
+                };
+                leaser: {
+                    id: string;
+                    name: string | null;
+                    role: "LEASER" | "OWNER" | "ADMIN";
+                    isKycVerified: boolean;
+                    createdAt: Date;
+                    updatedAt: Date;
+                };
+            }[];
+            total: number;
+        };
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
+    GetMyApplications: import("@trpc/server").TRPCQueryProcedure<{
+        input: {
+            status?: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED" | undefined;
         };
         output: {
             applications: {

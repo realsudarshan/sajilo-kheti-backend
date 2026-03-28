@@ -1,11 +1,9 @@
 import { TRPCError } from '@trpc/server';
 import { acceptApplicationInputSchema, acceptApplicationResponseSchema, getAllApplicationsInputSchema, getAllApplicationsResponseSchema, getApplicationByIdInputSchema, getApplicationByIdResponseSchema, getMyAcceptedApplicationsInputSchema, getMyAcceptedApplicationsResponseSchema, rejectApplicationInputSchema, rejectApplicationResponseSchema, requestedLeaseInputSchema, requestedLeaseResponseSchema } from '../../models/lease.models.js';
 import { adminProcedure, leaserProcedure, ownerProcedure, protectedProcedure, router } from '../../trpc.js';
+import { posthog } from '../../lib/analytics.js';
+import z from 'zod';
 export const leaseRouter = router({
-    /**
-     * STEP 1: LEASER SUBMITS APPLICATION
-     * Only accessible by users with 'LEASER' role.
-     */
     Submitapplication: leaserProcedure
         .meta({ openapi: { method: 'POST', path: '/lease/submit-application', description: 'Submit a lease application' } })
         .input(requestedLeaseInputSchema)
@@ -17,12 +15,23 @@ export const leaseRouter = router({
         }
         const leaseApplication = await ctx.prisma.application.create({
             data: {
-                leaserId: ctx.user.id, // Secure: use verified ID from token
+                leaserId: ctx.user.id,
                 landId: input.landId,
                 leaseDurationInMonths: input.leaseDurationInMonths,
                 proposedMonthlyRent: input.proposedMonthlyRent,
                 plans: input.plans,
                 additionalMessages: input.additionalMessages ?? null,
+            },
+        });
+        posthog.capture({
+            distinctId: ctx.user.id,
+            event: 'application_submitted',
+            properties: {
+                application_id: leaseApplication.id,
+                land_id: input.landId,
+                proposed_monthly_rent: input.proposedMonthlyRent,
+                lease_duration_months: input.leaseDurationInMonths,
+                land_owner_id: land.ownerId,
             },
         });
         return {
@@ -33,10 +42,6 @@ export const leaseRouter = router({
             proposedMonthlyRent: leaseApplication.proposedMonthlyRent,
         };
     }),
-    /**
-     * STEP 2: OWNER ACCEPTS APPLICATION
-     * Only accessible by users with 'OWNER' role.
-     */
     AcceptApplication: ownerProcedure
         .meta({ openapi: { method: 'POST', path: '/lease/accept-application', description: 'Accept a lease application' } })
         .input(acceptApplicationInputSchema)
@@ -48,7 +53,6 @@ export const leaseRouter = router({
         });
         if (!application)
             throw new TRPCError({ code: 'NOT_FOUND', message: 'Application not found' });
-        // Security: Ensure the user owns the land associated with this application
         if (application.land.ownerId !== ctx.user.id) {
             throw new TRPCError({ code: 'FORBIDDEN', message: 'You do not own this land listing' });
         }
@@ -56,7 +60,6 @@ export const leaseRouter = router({
             where: { id: input.applicationId },
             data: { status: 'ACCEPTED' },
         });
-        // Update land to 'IN_NEGOTIATION' and reject all other pending apps
         await ctx.prisma.$transaction([
             ctx.prisma.land.update({
                 where: { id: application.landId },
@@ -71,6 +74,15 @@ export const leaseRouter = router({
                 data: { status: 'REJECTED' },
             }),
         ]);
+        posthog.capture({
+            distinctId: ctx.user.id,
+            event: 'application_accepted',
+            properties: {
+                application_id: input.applicationId,
+                leaser_id: application.leaserId,
+                land_id: application.landId,
+            },
+        });
         return {
             success: true,
             message: 'Application accepted successfully',
@@ -82,9 +94,6 @@ export const leaseRouter = router({
             },
         };
     }),
-    /**
-     * STEP 2b: OWNER REJECTS APPLICATION
-     */
     RejectApplication: ownerProcedure
         .meta({ openapi: { method: 'POST', path: '/lease/reject-application', description: 'Reject a lease application' } })
         .input(rejectApplicationInputSchema)
@@ -101,45 +110,22 @@ export const leaseRouter = router({
             where: { id: input.applicationId },
             data: { status: 'REJECTED' },
         });
+        posthog.capture({
+            distinctId: ctx.user.id,
+            event: 'application_rejected',
+            properties: {
+                application_id: input.applicationId,
+                leaser_id: application.leaserId,
+                land_id: application.landId,
+                reason: input.reason ?? null,
+            },
+        });
         return {
             success: true,
             message: input.reason ? `Rejected: ${input.reason}` : 'Rejected successfully',
             application: { id: updatedApplication.id, status: updatedApplication.status },
         };
     }),
-    /**
-     * STEP 3: LEASER PAYS ESCROW
-     * This procedure verifies the Khalti/eSewa transaction and locks the funds.
-     */
-    // PayEscrow: leaserProcedure
-    //   .meta({ openapi: { method: 'POST', path: '/lease/pay-escrow', description: 'Pay the initial escrow amount' } })
-    //   .input(payEscrowInputSchema)
-    //   .output(payEscrowResponseSchema)
-    //   .mutation(async ({ ctx, input }) => {
-    //     const application = await ctx.prisma.application.findUnique({
-    //       where: { id: input.applicationId },
-    //     });
-    //     if (!application || application.leaserId !== ctx.user.id) {
-    //       throw new TRPCError({ code: 'FORBIDDEN', message: 'You can only pay for your own applications' });
-    //     }
-    //     // In a real app, you would verify the pidx (Khalti) or transaction_uuid (eSewa) here via Axios.
-    //     const escrow = await ctx.prisma.escrow.create({
-    //       data: {
-    //         applicationId: input.applicationId,
-    //         amount: input.amount,
-    //         status: 'HELD', // Funds are now safely held by the system
-    //         transactionId: input.transactionId,
-    //       },
-    //     });
-    //     return { success: true, escrowId: escrow.id, status: escrow.status };
-    //   }),
-    /**
-     * STEP 4: ADMIN VERIFIES MALPOT PAPERS
-     * Final step to release funds to owner and mark land as LEASED.
-     */
-    /**
-     * DATA QUERIES
-     */
     GetApplicationById: protectedProcedure
         .meta({ openapi: { method: 'GET', path: '/lease/application/{applicationId}', description: 'Get a lease application by ID' } })
         .input(getApplicationByIdInputSchema)
@@ -151,7 +137,6 @@ export const leaseRouter = router({
         });
         if (!application)
             throw new TRPCError({ code: 'NOT_FOUND' });
-        // Security: Check if user is either the leaser, the owner, or an admin
         const isLeaser = application.leaserId === ctx.user.id;
         const isOwner = application.land.ownerId === ctx.user.id;
         const isAdmin = ctx.user.role === 'ADMIN';
@@ -184,28 +169,61 @@ export const leaseRouter = router({
         openapi: {
             method: 'GET',
             path: '/lease/my-accepted-applications',
-            description: 'Get all accepted applications for the logged-in leaser'
-        }
+            description: 'Get all accepted applications for the logged-in leaser',
+        },
     })
         .input(getMyAcceptedApplicationsInputSchema)
         .output(getMyAcceptedApplicationsResponseSchema)
         .query(async ({ ctx, input }) => {
         const applications = await ctx.prisma.application.findMany({
             where: {
-                leaserId: ctx.user.id, // Mandatory: Ensures leasers only see their own data
-                status: 'ACCEPTED', // Filter for accepted applications
-                ...(input.landId && { landId: input.landId }), // Optional land filter
+                leaserId: ctx.user.id,
+                status: 'ACCEPTED',
+                ...(input.landId && { landId: input.landId }),
             },
-            include: {
-                land: true,
-                leaser: true
-            },
+            include: { land: true, leaser: true },
             orderBy: { createdAt: 'desc' },
         });
-        return {
-            applications,
-            total: applications.length
-        };
+        return { applications, total: applications.length };
+    }),
+    GetMyLeaserApplications: leaserProcedure
+        .meta({
+        openapi: {
+            method: 'GET',
+            path: '/lease/my-applications',
+            description: 'Get all lease applications submitted by the logged-in leaser',
+        },
     })
+        .input(z.object({
+        status: z.enum(['PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED']).optional(),
+    }))
+        .output(getAllApplicationsResponseSchema)
+        .query(async ({ ctx, input }) => {
+        const applications = await ctx.prisma.application.findMany({
+            where: {
+                leaserId: ctx.user.id,
+                ...(input.status && { status: input.status }),
+            },
+            include: { land: true, leaser: true },
+            orderBy: { createdAt: 'desc' },
+        });
+        return { applications, total: applications.length };
+    }),
+    GetMyApplications: leaserProcedure
+        .input(z.object({
+        status: z.enum(['PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED']).optional(),
+    }))
+        .output(getAllApplicationsResponseSchema)
+        .query(async ({ ctx, input }) => {
+        const applications = await ctx.prisma.application.findMany({
+            where: {
+                leaserId: ctx.user.id,
+                ...(input.status && { status: input.status }),
+            },
+            include: { land: true, leaser: true },
+            orderBy: { createdAt: 'desc' },
+        });
+        return { applications, total: applications.length };
+    }),
 });
 //# sourceMappingURL=lease.routes.js.map

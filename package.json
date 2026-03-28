@@ -5,6 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
     "postinstall": "prisma generate"
@@ -21,6 +22,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "morgan": "^1.10.1",
+    "posthog-node": "^5.28.8",
     "swagger-ui-express": "^5.0.1",
     "trpc-to-openapi": "^3.1.0",
     "zod": "^4.3.6"

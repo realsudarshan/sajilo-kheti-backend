@@ -251,6 +251,13 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             output: any;
             meta: import("trpc-to-openapi").OpenApiMeta;
         }>;
+        getMyLands: import("@trpc/server").TRPCQueryProcedure<{
+            input: {
+                status?: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN" | undefined;
+            };
+            output: any;
+            meta: import("trpc-to-openapi").OpenApiMeta;
+        }>;
     }>>;
     lease: import("@trpc/server").TRPCBuiltRouter<{
         ctx: {
@@ -401,6 +408,92 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
         GetMyAcceptedApplications: import("@trpc/server").TRPCQueryProcedure<{
             input: {
                 landId?: string | undefined;
+            };
+            output: {
+                applications: {
+                    id: string;
+                    landId: string;
+                    leaserId: string;
+                    plans: string;
+                    leaseDurationInMonths: number;
+                    proposedMonthlyRent: number;
+                    status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+                    additionalMessages: string | null;
+                    createdAt: Date;
+                    land: {
+                        id: string;
+                        ownerId: string;
+                        title: string;
+                        description: string;
+                        location: string;
+                        sizeInSqmeter: number;
+                        pricePerMonth: number;
+                        heroImageUrl: string;
+                        galleryUrls: string[];
+                        lalpurjaUrl: string | null;
+                        status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                        createdAt: Date;
+                        updatedAt: Date;
+                    };
+                    leaser: {
+                        id: string;
+                        name: string | null;
+                        role: "LEASER" | "OWNER" | "ADMIN";
+                        isKycVerified: boolean;
+                        createdAt: Date;
+                        updatedAt: Date;
+                    };
+                }[];
+                total: number;
+            };
+            meta: import("trpc-to-openapi").OpenApiMeta;
+        }>;
+        GetMyLeaserApplications: import("@trpc/server").TRPCQueryProcedure<{
+            input: {
+                status?: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED" | undefined;
+            };
+            output: {
+                applications: {
+                    id: string;
+                    landId: string;
+                    leaserId: string;
+                    plans: string;
+                    leaseDurationInMonths: number;
+                    proposedMonthlyRent: number;
+                    status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+                    additionalMessages: string | null;
+                    createdAt: Date;
+                    land: {
+                        id: string;
+                        ownerId: string;
+                        title: string;
+                        description: string;
+                        location: string;
+                        sizeInSqmeter: number;
+                        pricePerMonth: number;
+                        heroImageUrl: string;
+                        galleryUrls: string[];
+                        lalpurjaUrl: string | null;
+                        status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                        createdAt: Date;
+                        updatedAt: Date;
+                    };
+                    leaser: {
+                        id: string;
+                        name: string | null;
+                        role: "LEASER" | "OWNER" | "ADMIN";
+                        isKycVerified: boolean;
+                        createdAt: Date;
+                        updatedAt: Date;
+                    };
+                }[];
+                total: number;
+            };
+            meta: import("trpc-to-openapi").OpenApiMeta;
+        }>;
+        GetMyApplications: import("@trpc/server").TRPCQueryProcedure<{
+            input: {
+                status?: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED" | undefined;
             };
             output: {
                 applications: {
@@ -697,7 +790,28 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 plans: string;
                 landId: string;
                 additionalMessages: string | null;
+            }, {
+                status: import("@prisma/client").$Enums.LandStatus;
+                id: string;
+                ownerId: string;
+                createdAt: Date;
+                updatedAt: Date;
+                title: string;
+                location: string;
+                heroImageUrl: string;
+                description: string;
+                latitude: number;
+                longitude: number;
+                sizeInSqmeter: number;
+                pricePerMonth: number;
+                galleryUrls: string[];
+                lalpurjaUrl: string;
             }];
+            meta: import("trpc-to-openapi").OpenApiMeta;
+        }>;
+        GetAllEscrowsAgreementForAdmin: import("@trpc/server").TRPCQueryProcedure<{
+            input: void;
+            output: any;
             meta: import("trpc-to-openapi").OpenApiMeta;
         }>;
     }>>;

@@ -1,8 +1,6 @@
-// BACKEND: src/server/services/escrow.service.ts
-// Create this new folder: src/server/services/
-
 import { TRPCError } from '@trpc/server';
 import { prisma } from '../lib/prisma.js';
+import { posthog } from '../lib/analytics.js';
 
 const COMMISSION_RATE = 0.05;
 
@@ -62,6 +60,19 @@ export async function payEscrowService(input: {
       status:        'HOLDING',
       ownerId:       application.land.ownerId,
       leaserId:      application.leaserId,
+    },
+  });
+
+  posthog.capture({
+    distinctId: input.userId,
+    event: 'escrow_paid',
+    properties: {
+      escrow_id:      escrow.id,
+      application_id: input.applicationId,
+      amount:         input.amount,
+      commission,
+      land_id:        application.landId,
+      owner_id:       application.land.ownerId,
     },
   });
 

@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { adminProcedure, leaserProcedure, ownerProcedure, publicProcedure, router } from '../../trpc.js';
+import { adminProcedure, leaserProcedure, ownerProcedure, protectedProcedure, publicProcedure, router } from '../../trpc.js';
 import {
   getLandByIdInputSchema,
   landSchema,
@@ -12,9 +12,10 @@ import {
 } from '../../models/land.models.js';
 import { calculateSqMtr } from '../../lib/converttosqmeter.js';
 import z from 'zod';
+import { posthog } from '../../lib/analytics.js';
 
 export const landRouter = router({
- publish: publicProcedure
+  publish: publicProcedure
     .meta({
       openapi: {
         method: 'POST',
@@ -26,28 +27,37 @@ export const landRouter = router({
     .input(publishLandInputSchema)
     .output(publishLandResponseSchema)
     .mutation(async ({ ctx, input }) => {
-      // Logic to convert Ropani/Bigha to Sq Meter
       const totalSqmeter = calculateSqMtr(input.size);
 
-      return await ctx.prisma.land.create({
+      const land = await ctx.prisma.land.create({
         data: {
           ownerId: input.ownerId,
           title: input.title,
           description: input.description,
           location: input.location,
-          
-          // Mapping coordinates from input
           latitude: input.coordinates.lat,
           longitude: input.coordinates.lng,
-          
           sizeInSqmeter: totalSqmeter,
           pricePerMonth: input.price,
           heroImageUrl: input.landpic,
           galleryUrls: input.morelandpic,
           lalpurjaUrl: input.lalpurjaUrl ?? null,
-          status: 'UNVERIFIED', // Matching your Prisma model default
+          status: 'UNVERIFIED',
         },
       });
+
+      posthog.capture({
+        distinctId: input.ownerId,
+        event: 'land_published',
+        properties: {
+          land_id: land.id,
+          location: land.location,
+          price_per_month: land.pricePerMonth,
+          size_in_sqmeter: land.sizeInSqmeter,
+        },
+      });
+
+      return land;
     }),
 
   acceptLand: adminProcedure
@@ -60,12 +70,23 @@ export const landRouter = router({
       },
     })
     .input(z.object({ landId: z.string() }))
-    .output(z.any()) // Required for OpenAPI
+    .output(z.any())
     .mutation(async ({ ctx, input }) => {
-      return await ctx.prisma.land.update({
+      const land = await ctx.prisma.land.update({
         where: { id: input.landId },
         data: { status: 'AVAILABLE' },
       });
+
+      posthog.capture({
+        distinctId: ctx.user.id,
+        event: 'land_verified',
+        properties: {
+          land_id: input.landId,
+          owner_id: land.ownerId,
+        },
+      });
+
+      return land;
     }),
 
   rejectLand: adminProcedure
@@ -78,12 +99,23 @@ export const landRouter = router({
       },
     })
     .input(z.object({ landId: z.string() }))
-    .output(z.any()) // Required for OpenAPI
+    .output(z.any())
     .mutation(async ({ ctx, input }) => {
-      return await ctx.prisma.land.update({
+      const land = await ctx.prisma.land.update({
         where: { id: input.landId },
         data: { status: 'REJECTED' },
       });
+
+      posthog.capture({
+        distinctId: ctx.user.id,
+        event: 'land_rejected',
+        properties: {
+          land_id: input.landId,
+          owner_id: land.ownerId,
+        },
+      });
+
+      return land;
     }),
 
   search: publicProcedure
@@ -99,7 +131,7 @@ export const landRouter = router({
     .output(searchLandResponseSchema)
     .query(async ({ ctx, input }) => {
       const where: any = {
-        status: 'AVAILABLE'
+        status: 'AVAILABLE',
       };
 
       if (input.location) {
@@ -122,6 +154,20 @@ export const landRouter = router({
         where,
         orderBy: { createdAt: 'desc' },
       });
+
+      posthog.capture({
+        distinctId: ctx.userId ?? 'anonymous',
+        event: 'land_searched',
+        properties: {
+          location: input.location,
+          min_price: input.minPrice,
+          max_price: input.maxPrice,
+          min_size: input.minSize,
+          max_size: input.maxSize,
+          results_count: lands.length,
+        },
+      });
+
       return { lands };
     }),
 
@@ -140,7 +186,20 @@ export const landRouter = router({
       const land = await ctx.prisma.land.findUnique({
         where: { id: input.landId },
       });
+
       if (!land) throw new TRPCError({ code: 'NOT_FOUND', message: 'Land not found' });
+
+      posthog.capture({
+        distinctId: ctx.userId ?? 'anonymous',
+        event: 'land_viewed',
+        properties: {
+          land_id: land.id,
+          location: land.location,
+          price_per_month: land.pricePerMonth,
+          status: land.status,
+        },
+      });
+
       return land;
     }),
 
@@ -160,6 +219,16 @@ export const landRouter = router({
         where: { id: input.landId },
         data: { status: input.status },
       });
+
+      posthog.capture({
+        distinctId: ctx.user.id,
+        event: 'land_status_updated',
+        properties: {
+          land_id: input.landId,
+          new_status: input.status,
+        },
+      });
+
       return { id: updated.id, status: updated.status };
     }),
 
@@ -173,9 +242,9 @@ export const landRouter = router({
       },
     })
     .input(z.object({
-      status: z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']).optional()
+      status: z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']).optional(),
     }).optional())
-    .output(z.any()) // Required for OpenAPI
+    .output(z.any())
     .query(async ({ ctx, input }) => {
       try {
         const where: any = {};
@@ -191,9 +260,9 @@ export const landRouter = router({
               select: {
                 id: true,
                 name: true,
-              }
-            }
-          }
+              },
+            },
+          },
         });
 
         return lands;
@@ -204,5 +273,30 @@ export const landRouter = router({
           message: 'Failed to fetch lands for admin',
         });
       }
+    }),
+
+  getMyLands: protectedProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/land/my-lands',
+        tags: ['Land'],
+        summary: 'Get all lands owned by the logged-in user',
+      },
+    })
+    .input(z.object({
+      status: z.enum(['AVAILABLE', 'UNVERIFIED', 'REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']).optional(),
+    }))
+    .output(z.any())
+    .query(async ({ ctx, input }) => {
+      const lands = await ctx.prisma.land.findMany({
+        where: {
+          ownerId: ctx.user.id,
+          ...(input.status && { status: input.status }),
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return { lands };
     }),
 });

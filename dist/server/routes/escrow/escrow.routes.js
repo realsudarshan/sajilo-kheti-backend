@@ -1,17 +1,11 @@
-// BACKEND: src/server/routes/escrow/escrow.routes.ts
-// Full replacement — PayEscrow now delegates to payEscrowService
 import { TRPCError } from '@trpc/server';
 import { EscrowStatus } from '@prisma/client';
 import { getEscrowByIdResponseSchema, getMyEscrowsResponseSchema, getMyOwnerEscrowsResponseSchema, payEscrowInputSchema, payEscrowResponseSchema, saveChatChannelInputSchema, saveChatChannelResponseSchema, verifyMalpotPapersInputSchema, verifyMalpotPapersResponseSchema, } from '../../models/escrow.models.js';
 import { adminProcedure, leaserProcedure, ownerProcedure, protectedProcedure, router } from '../../trpc.js';
 import { payEscrowService } from '../../services/escrow.service.js';
+import { posthog } from '../../lib/analytics.js';
 import z from 'zod';
 export const escrowRouter = router({
-    /**
-     * STEP 3: PAY ESCROW
-     * Now delegates to payEscrowService so the same logic
-     * can be called from the Next.js API route too.
-     */
     PayEscrow: leaserProcedure
         .meta({
         openapi: {
@@ -42,16 +36,27 @@ export const escrowRouter = router({
         if (application.land.status !== 'IN_NEGOTIATION') {
             throw new TRPCError({ code: 'BAD_REQUEST', message: 'Land must be in IN_NEGOTIATION status.' });
         }
-        // Create escrow — ownerId comes from the land, leaserId from the application
         const escrow = await ctx.prisma.escrow.create({
             data: {
                 applicationId: input.applicationId,
-                ownerId: application.land.ownerId, // ← land owner
-                leaserId: application.leaserId, // ← leaser who applied
+                ownerId: application.land.ownerId,
+                leaserId: application.leaserId,
                 amount: input.amount,
                 paymentId: input.paymentId,
                 commission: input.commission,
                 status: 'HOLDING',
+            },
+        });
+        posthog.capture({
+            distinctId: ctx.user.id,
+            event: 'escrow_paid',
+            properties: {
+                escrow_id: escrow.id,
+                application_id: input.applicationId,
+                amount: input.amount,
+                commission: input.commission,
+                land_id: application.landId,
+                owner_id: application.land.ownerId,
             },
         });
         return {
@@ -66,9 +71,6 @@ export const escrowRouter = router({
             landStatus: application.land.status,
         };
     }),
-    /**
-     * STEP 4: VERIFY MALPOT PAPERS (Admin)
-     */
     VerifyMalpotPapers: adminProcedure
         .meta({
         openapi: {
@@ -106,6 +108,16 @@ export const escrowRouter = router({
             ctx.prisma.land.update({ where: { id: application.landId }, data: { status: 'LEASED' } }),
             ctx.prisma.escrow.update({ where: { id: application.escrow.id }, data: { status: 'RELEASED' } }),
         ]);
+        posthog.capture({
+            distinctId: ctx.user.id,
+            event: 'malpot_verified',
+            properties: {
+                application_id: input.applicationId,
+                land_id: application.landId,
+                escrow_id: application.escrow.id,
+                escrow_amount: application.escrow.amount,
+            },
+        });
         return {
             success: true,
             message: 'Malpot papers verified. Funds released to owner.',
@@ -237,28 +249,16 @@ export const escrowRouter = router({
             },
         });
         if (!escrow) {
-            throw new TRPCError({
-                code: 'NOT_FOUND',
-                message: 'Escrow record not found'
-            });
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'Escrow record not found' });
         }
-        // --- THE FIX IS HERE ---
-        // Check if the current user is the Leaser OR the Landowner
         const isLeaser = escrow.leaserId === ctx.user.id;
         const isOwner = escrow.ownerId === ctx.user.id;
-        const isAdmin = ctx.user.role === 'ADMIN'; // Add this if you have roles
+        const isAdmin = ctx.user.role === 'ADMIN';
         if (!isLeaser && !isOwner && !isAdmin) {
-            throw new TRPCError({
-                code: 'FORBIDDEN',
-                message: 'You do not have permission to view this escrow'
-            });
+            throw new TRPCError({ code: 'FORBIDDEN', message: 'You do not have permission to view this escrow' });
         }
         return escrow;
     }),
-    /**
-   * SUBMIT MALPOT PAPERS
-   * Targets Escrow by ID and identifies the uploader role.
-   */
     SubmitMalpotPapers: protectedProcedure
         .meta({
         openapi: {
@@ -273,42 +273,44 @@ export const escrowRouter = router({
     }))
         .output(z.object({ success: z.boolean(), message: z.string() }))
         .mutation(async ({ ctx, input }) => {
-        // 1. Fetch the Escrow record to verify participants
         const escrow = await ctx.prisma.escrow.findUnique({
             where: { id: input.escrowId },
         });
         if (!escrow) {
             throw new TRPCError({ code: 'NOT_FOUND', message: 'Escrow record not found' });
         }
-        // 2. Identify the role of the logged-in user
         const isLeaser = escrow.leaserId === ctx.user.id;
         const isOwner = escrow.ownerId === ctx.user.id;
         if (!isLeaser && !isOwner) {
-            throw new TRPCError({
-                code: 'FORBIDDEN',
-                message: 'Access denied. You are not a party to this transaction.'
-            });
+            throw new TRPCError({ code: 'FORBIDDEN', message: 'Access denied. You are not a party to this transaction.' });
         }
-        // 3. Prepare the update data for the specific role field
         const updateData = isOwner
             ? { landownerMalpotUrl: input.malpotPaperUrl }
             : { landleaserMalpotUrl: input.malpotPaperUrl };
-        // 4. Update the Escrow record
         await ctx.prisma.escrow.update({
             where: { id: input.escrowId },
             data: updateData,
+        });
+        posthog.capture({
+            distinctId: ctx.user.id,
+            event: 'malpot_submitted',
+            properties: {
+                escrow_id: input.escrowId,
+                role: isOwner ? 'OWNER' : 'LEASER',
+            },
         });
         return {
             success: true,
             message: `Document successfully uploaded as ${isOwner ? 'Landowner' : 'Leaser'}.`,
         };
     }),
-    GetAllEscrowsForAdmin: adminProcedure.query(async ({ ctx }) => {
+    GetAllEscrowsForAdmin: adminProcedure
+        .query(async ({ ctx }) => {
         return await ctx.prisma.escrow.findMany({
             where: {
                 AND: [
                     { landownerMalpotUrl: { not: null } },
-                    { landownerMalpotUrl: { not: "" } }, // Separate objects to avoid duplicate 'not' keys
+                    { landownerMalpotUrl: { not: "" } },
                     { landleaserMalpotUrl: { not: null } },
                     { landleaserMalpotUrl: { not: "" } },
                 ],
@@ -318,54 +320,106 @@ export const escrowRouter = router({
                 leaser: { select: { name: true } },
                 application: {
                     include: {
-                        land: { select: { title: true, location: true } }
+                        land: { select: { title: true, location: true } },
                     },
                 },
             },
-            orderBy: { updatedAt: "desc" },
+            orderBy: { updatedAt: 'desc' },
         });
     }),
     VerifyLegalDocuments: adminProcedure
         .input(z.object({
         escrowId: z.string(),
-        action: z.enum(["APPROVE", "REJECT"])
+        action: z.enum(["APPROVE", "REJECT"]),
     }))
         .mutation(async ({ ctx, input }) => {
-        // FIX 1: Removed 'input.input' typo. It's just 'input'
         const { escrowId, action } = input;
         if (action === "APPROVE") {
             const escrow = await ctx.prisma.escrow.findUnique({
                 where: { id: escrowId },
-                select: { applicationId: true }
+                select: {
+                    applicationId: true,
+                    amount: true,
+                    application: { select: { landId: true } },
+                },
             });
-            // FIX 2: Strict ID check. Prisma won't accept 'undefined' for a unique find.
             if (!escrow || !escrow.applicationId) {
-                throw new TRPCError({
-                    code: "NOT_FOUND",
-                    message: "Escrow or linked application not found"
-                });
+                throw new TRPCError({ code: "NOT_FOUND", message: "Escrow or linked application not found" });
             }
-            return await ctx.prisma.$transaction([
+            const result = await ctx.prisma.$transaction([
                 ctx.prisma.escrow.update({
                     where: { id: escrowId },
                     data: { status: "RELEASED" },
                 }),
                 ctx.prisma.application.update({
-                    where: { id: escrow.applicationId }, // Now guaranteed to be a string
-                    data: { status: "COMPLETED" }
-                })
+                    where: { id: escrow.applicationId },
+                    data: { status: "COMPLETED" },
+                }),
+                ctx.prisma.land.update({
+                    where: { id: escrow.application.landId },
+                    data: { status: "LEASED" },
+                }),
             ]);
+            posthog.capture({
+                distinctId: ctx.user.id,
+                event: 'lease_completed',
+                properties: {
+                    escrow_id: escrowId,
+                    application_id: escrow.applicationId,
+                    land_id: escrow.application.landId,
+                    escrow_amount: escrow.amount,
+                },
+            });
+            return result;
         }
         else {
-            return await ctx.prisma.escrow.update({
+            const result = await ctx.prisma.escrow.update({
                 where: { id: escrowId },
                 data: {
                     landownerMalpotUrl: null,
                     landleaserMalpotUrl: null,
-                    status: "HOLDING"
+                    status: "HOLDING",
                 },
             });
+            posthog.capture({
+                distinctId: ctx.user.id,
+                event: 'malpot_rejected',
+                properties: { escrow_id: escrowId },
+            });
+            return result;
         }
+    }),
+    GetAllEscrowsAgreementForAdmin: adminProcedure
+        .meta({
+        openapi: {
+            method: 'GET',
+            path: '/escrow/admin/agreements',
+            description: 'Get all escrows that have a verified lease agreement (admin only)',
+        },
+    })
+        .output(z.any())
+        .query(async ({ ctx }) => {
+        const escrows = await ctx.prisma.escrow.findMany({
+            where: {
+                AND: [
+                    { landownerMalpotUrl: { not: null } },
+                    { landownerMalpotUrl: { not: "" } },
+                    { landleaserMalpotUrl: { not: null } },
+                    { landleaserMalpotUrl: { not: "" } },
+                ],
+            },
+            include: {
+                owner: { select: { name: true } },
+                leaser: { select: { name: true } },
+                application: {
+                    include: {
+                        land: { select: { title: true, location: true } },
+                    },
+                },
+            },
+            orderBy: { updatedAt: 'desc' },
+        });
+        return { escrows };
     }),
 });
 //# sourceMappingURL=escrow.routes.js.map

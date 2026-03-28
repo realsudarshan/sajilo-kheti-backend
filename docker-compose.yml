@@ -1,0 +1,82 @@
+services:
+  backend:
+    build: .
+    container_name: sajilo_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@posthog_db:5432/sajilokheti
+      - POSTHOG_API_KEY=${POSTHOG_API_KEY}
+      - POSTHOG_HOST=http://posthog:8000
+    networks:
+      - sajilo_network
+    depends_on:
+      - posthog
+
+  posthog:
+    image: posthog/posthog:latest
+    container_name: posthog
+    ports:
+      - "8080:8000"
+    environment:
+      - POSTHOG_POSTGRES_HOST=posthog_db
+      - POSTHOG_REDIS_HOST=posthog_redis
+      - POSTHOG_CLICKHOUSE_HOST=clickhouse
+      - KAFKA_URL=kafka:9092
+      - SNUBA_HOST=http://snuba:1218
+      - SECRET_KEY=sajilo_secret_key_123
+    networks:
+      - sajilo_network
+    depends_on:
+      - posthog_db
+      - posthog_redis
+      - clickhouse
+
+  posthog_db:
+    image: postgres:15-alpine
+    container_name: posthog_db
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - posthog_postgres_data:/var/lib/postgresql/data
+    networks:
+      - sajilo_network
+
+  posthog_redis:
+    image: redis:7-alpine
+    container_name: posthog_redis
+    networks:
+      - sajilo_network
+
+  clickhouse:
+    # Switched to a stable version to avoid "latest" pull issues
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: clickhouse
+    user: "101:101"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    networks:
+      - sajilo_network
+
+  kafka:
+    # FIX: Bitnami changed tagging. Using 3.7 explicitly fixes your "Not Found" error.
+    image: bitnami/kafka:3.7
+    container_name: kafka
+    environment:
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+    networks:
+      - sajilo_network
+
+networks:
+  sajilo_network:
+    driver: bridge
+
+volumes:
+  posthog_postgres_data:
+  clickhouse_data:

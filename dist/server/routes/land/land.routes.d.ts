@@ -151,5 +151,12 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
         output: any;
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
+    getMyLands: import("@trpc/server").TRPCQueryProcedure<{
+        input: {
+            status?: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN" | undefined;
+        };
+        output: any;
+        meta: import("trpc-to-openapi").OpenApiMeta;
+    }>;
 }>>;
 //# sourceMappingURL=land.routes.d.ts.map

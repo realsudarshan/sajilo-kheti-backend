@@ -1,8 +1,9 @@
 import { clerkClient } from '@clerk/express';
 import { TRPCError } from '@trpc/server';
-import { z } from 'zod'; // Added for .output(z.any())
+import { z } from 'zod';
 import { createUserInputSchema, createUserResponseSchema, getAllUsersResponseSchema, updateKycStatusInputSchema, updateKycStatusResponseSchema, upgradeRequestInputSchema, upgradeRequestResponseSchema, } from '../../models/user.models.js';
 import { adminProcedure, protectedProcedure, publicProcedure, router, } from '../../trpc.js';
+import { posthog } from '../../lib/analytics.js';
 export const userRouter = router({
     getAllUser: adminProcedure
         .meta({
@@ -49,14 +50,20 @@ export const userRouter = router({
         .input(createUserInputSchema)
         .output(createUserResponseSchema)
         .mutation(async ({ ctx, input }) => {
-        return await ctx.prisma.user.upsert({
+        const user = await ctx.prisma.user.upsert({
             where: { id: input.id },
             update: {},
-            create: {
-                id: input.id,
+            create: { id: input.id, role: 'LEASER' },
+        });
+        posthog.capture({
+            distinctId: input.id,
+            event: 'user_created',
+            properties: {
+                user_id: input.id,
                 role: 'LEASER',
             },
         });
+        return user;
     }),
     upgradeRequest: protectedProcedure
         .meta({
@@ -70,7 +77,7 @@ export const userRouter = router({
         .input(upgradeRequestInputSchema)
         .output(upgradeRequestResponseSchema)
         .mutation(async ({ ctx, input }) => {
-        return await ctx.prisma.kycDetail.upsert({
+        const kyc = await ctx.prisma.kycDetail.upsert({
             where: { userId: ctx.user.id },
             create: {
                 userId: ctx.user.id,
@@ -88,6 +95,14 @@ export const userRouter = router({
                 status: 'PENDING',
             },
         });
+        posthog.capture({
+            distinctId: ctx.user.id,
+            event: 'kyc_submitted',
+            properties: {
+                user_id: ctx.user.id,
+            },
+        });
+        return kyc;
     }),
     updateKycStatus: adminProcedure
         .meta({
@@ -101,7 +116,7 @@ export const userRouter = router({
         .input(updateKycStatusInputSchema)
         .output(updateKycStatusResponseSchema)
         .mutation(async ({ ctx, input }) => {
-        return await ctx.prisma.$transaction(async (tx) => {
+        const result = await ctx.prisma.$transaction(async (tx) => {
             const kyc = await tx.kycDetail.findUnique({
                 where: { userId: input.userId },
             });
@@ -126,6 +141,17 @@ export const userRouter = router({
                 isKycVerified: updatedUser.isKycVerified,
             };
         });
+        posthog.capture({
+            distinctId: input.userId,
+            event: 'kyc_reviewed',
+            properties: {
+                user_id: input.userId,
+                status: input.status,
+                new_role: input.status === 'APPROVED' ? 'OWNER' : 'LEASER',
+                admin_id: ctx.user.id,
+            },
+        });
+        return result;
     }),
     getKycDetails: protectedProcedure
         .meta({
@@ -136,14 +162,13 @@ export const userRouter = router({
             summary: 'Get current user KYC details',
         },
     })
-        .output(z.any()) // Required for OpenAPI generation
+        .output(z.any())
         .query(async ({ ctx }) => {
         const kyc = await ctx.prisma.kycDetail.findUnique({
             where: { userId: ctx.user.id },
         });
-        if (!kyc) {
+        if (!kyc)
             return null;
-        }
         return kyc;
     }),
     getAllKycDetails: adminProcedure
@@ -155,7 +180,7 @@ export const userRouter = router({
             summary: 'Get all KYC applications (Admin)',
         },
     })
-        .output(z.any()) // Required for OpenAPI generation
+        .output(z.any())
         .query(async ({ ctx }) => {
         const kycDetails = await ctx.prisma.kycDetail.findMany({
             include: {
@@ -168,10 +193,8 @@ export const userRouter = router({
                 },
             },
         });
-        const userIds = kycDetails.map(kyc => kyc.userId);
-        const clerkUsers = await clerkClient.users.getUserList({
-            userId: userIds,
-        });
+        const userIds = kycDetails.map((kyc) => kyc.userId);
+        const clerkUsers = await clerkClient.users.getUserList({ userId: userIds });
         const hydratedKycDetails = kycDetails.map((kyc) => {
             const clerkInfo = clerkUsers.data.find((cu) => cu.id === kyc.userId);
             return {
@@ -191,7 +214,7 @@ export const userRouter = router({
             summary: 'Get full profile of the logged-in user',
         },
     })
-        .output(z.any()) // Required for OpenAPI generation
+        .output(z.any())
         .query(async ({ ctx }) => {
         const user = await ctx.prisma.user.findUnique({
             where: { id: ctx.user.id },
