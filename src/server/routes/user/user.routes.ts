@@ -15,9 +15,11 @@ import {
   adminProcedure,
   protectedProcedure,
   publicProcedure,
+  clerkAuthedProcedure,
   router,
 } from '../../trpc.js';
 import { posthog } from '../../lib/analytics.js';
+import { sendPushNotification } from '../../lib/push.js';
 
 export const userRouter = router({
   getAllUser: adminProcedure
@@ -182,6 +184,15 @@ export const userRouter = router({
         },
       });
 
+      // Notify the user about their KYC result
+      await sendPushNotification(input.userId, {
+        title: input.status === 'APPROVED' ? 'KYC Verified! 🎉' : 'KYC Rejected ❌',
+        body: input.status === 'APPROVED' 
+          ? 'Your KYC documents have been verified. You can now list properties as a Landowner!'
+          : 'Your KYC documents were rejected. Please review our guidelines and re-submit.',
+        url: `/dashboard/profile`
+      });
+
       return result;
     }),
 
@@ -243,7 +254,7 @@ export const userRouter = router({
       return { kycDetails: hydratedKycDetails };
     }),
 
-  getMe: protectedProcedure
+  getMe: clerkAuthedProcedure
     .meta({
       openapi: {
         method: 'GET',
@@ -254,8 +265,8 @@ export const userRouter = router({
     })
     .output(z.any())
     .query(async ({ ctx }) => {
-      const user = await ctx.prisma.user.findUnique({
-        where:   { id: ctx.user.id },
+      let user = await ctx.prisma.user.findUnique({
+        where:   { id: ctx.userId },
         include: {
           kycDetails:   true,
           lands:        true,
@@ -264,9 +275,16 @@ export const userRouter = router({
       });
 
       if (!user) {
-        throw new TRPCError({
-          code:    'NOT_FOUND',
-          message: 'User profile not found in MongoDB.',
+        // Auto-create to handle Clerk webhook race conditions (webhooks can be delayed)
+        user = await ctx.prisma.user.upsert({
+          where:  { id: ctx.userId },
+          update: {},
+          create: { id: ctx.userId, role: 'LEASER' },
+          include: {
+            kycDetails:   true,
+            lands:        true,
+            applications: true,
+          },
         });
       }
 

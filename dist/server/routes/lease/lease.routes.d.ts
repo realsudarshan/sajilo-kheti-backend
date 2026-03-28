@@ -37,7 +37,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
             message: string;
             application: {
                 id: string;
-                status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+                status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
                 leaserId: string;
                 landId: string;
             };
@@ -54,7 +54,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
             message: string;
             application: {
                 id: string;
-                status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+                status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
             };
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
@@ -70,7 +70,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
             plans: string;
             leaseDurationInMonths: number;
             proposedMonthlyRent: number;
-            status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+            status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
             additionalMessages: string | null;
             createdAt: Date;
             land: {
@@ -84,7 +84,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
                 heroImageUrl: string;
                 galleryUrls: string[];
                 lalpurjaUrl: string | null;
-                status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                status: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                 createdAt: Date;
                 updatedAt: Date;
             };
@@ -101,7 +101,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
     }>;
     GetAllApplications: import("@trpc/server").TRPCQueryProcedure<{
         input: {
-            status?: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED" | undefined;
+            status?: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED" | undefined;
             landId?: string | undefined;
             leaserId?: string | undefined;
         };
@@ -113,7 +113,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
                 plans: string;
                 leaseDurationInMonths: number;
                 proposedMonthlyRent: number;
-                status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+                status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
                 additionalMessages: string | null;
                 createdAt: Date;
                 land: {
@@ -127,7 +127,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
                     heroImageUrl: string;
                     galleryUrls: string[];
                     lalpurjaUrl: string | null;
-                    status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                    status: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                     createdAt: Date;
                     updatedAt: Date;
                 };
@@ -156,7 +156,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
                 plans: string;
                 leaseDurationInMonths: number;
                 proposedMonthlyRent: number;
-                status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+                status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
                 additionalMessages: string | null;
                 createdAt: Date;
                 land: {
@@ -170,7 +170,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
                     heroImageUrl: string;
                     galleryUrls: string[];
                     lalpurjaUrl: string | null;
-                    status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                    status: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                     createdAt: Date;
                     updatedAt: Date;
                 };
@@ -189,7 +189,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
     }>;
     GetMyLeaserApplications: import("@trpc/server").TRPCQueryProcedure<{
         input: {
-            status?: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED" | undefined;
+            status?: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED" | undefined;
         };
         output: {
             applications: {
@@ -199,7 +199,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
                 plans: string;
                 leaseDurationInMonths: number;
                 proposedMonthlyRent: number;
-                status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+                status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
                 additionalMessages: string | null;
                 createdAt: Date;
                 land: {
@@ -213,7 +213,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
                     heroImageUrl: string;
                     galleryUrls: string[];
                     lalpurjaUrl: string | null;
-                    status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                    status: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                     createdAt: Date;
                     updatedAt: Date;
                 };
@@ -232,7 +232,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
     }>;
     GetMyApplications: import("@trpc/server").TRPCQueryProcedure<{
         input: {
-            status?: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED" | undefined;
+            status?: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED" | undefined;
         };
         output: {
             applications: {
@@ -242,7 +242,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
                 plans: string;
                 leaseDurationInMonths: number;
                 proposedMonthlyRent: number;
-                status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
+                status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
                 additionalMessages: string | null;
                 createdAt: Date;
                 land: {
@@ -256,7 +256,7 @@ export declare const leaseRouter: import("@trpc/server").TRPCBuiltRouter<{
                     heroImageUrl: string;
                     galleryUrls: string[];
                     lalpurjaUrl: string | null;
-                    status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                    status: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                     createdAt: Date;
                     updatedAt: Date;
                 };

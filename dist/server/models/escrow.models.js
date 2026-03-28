@@ -26,11 +26,11 @@ export const payEscrowResponseSchema = z.object({
 // ============================================================================
 // STEP 4: SUBMIT MALPOT PAPERS (NEW)
 // ============================================================================
-export const submitMalpotPapersInputSchema = z.object({
+const submitMalpotPapersInputSchema = z.object({
     escrowId: z.string(),
     malpotPaperUrl: z.string().url('Must be a valid URL'),
 });
-export const submitMalpotPapersResponseSchema = z.object({
+const submitMalpotPapersResponseSchema = z.object({
     success: z.boolean(),
     message: z.string(),
 });

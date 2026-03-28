@@ -1,12 +1,4 @@
 import { z } from 'zod';
-export declare const LandStatusSchema: z.ZodEnum<{
-    AVAILABLE: "AVAILABLE";
-    UNVERIFIED: "UNVERIFIED";
-    REJECTED: "REJECTED";
-    IN_NEGOTIATION: "IN_NEGOTIATION";
-    LEASED: "LEASED";
-    HIDDEN: "HIDDEN";
-}>;
 export declare const LandSizeSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
     system: z.ZodLiteral<"HILLY">;
     ropani: z.ZodDefault<z.ZodNumber>;

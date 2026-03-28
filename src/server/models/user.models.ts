@@ -41,7 +41,7 @@ export const upgradeRequestResponseSchema = z.object({
   citizenshipNumber: z.string(),
   documentUrl: z.string(),
   selfieUrl: z.string().nullable(),
-  paymentNumber:z.string(),
+  paymentNumber:z.string().nullable(),
 });
 
 export const updateKycStatusInputSchema = z.object({

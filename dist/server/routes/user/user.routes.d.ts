@@ -53,14 +53,14 @@ export declare const userRouter: import("@trpc/server").TRPCBuiltRouter<{
             citizenshipNumber: string;
             documentUrl: string;
             selfieUrl: string | null;
-            paymentNumber: string;
+            paymentNumber: string | null;
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
     updateKycStatus: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             userId: string;
-            status: "REJECTED" | "PENDING" | "APPROVED";
+            status: "PENDING" | "REJECTED" | "APPROVED";
         };
         output: {
             userId: string;

@@ -59,6 +59,8 @@ model User {
   ownedEscrows  Escrow[]     @relation("OwnerEscrows")
   leasedEscrows Escrow[]     @relation("LeaserEscrows")
   
+  pushSubscriptions PushSubscription[] @relation("UserPushSubs")
+  
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 }
@@ -67,7 +69,7 @@ model KycDetail {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   userId            String   @unique
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  paymentNumber     String
+  paymentNumber     String?
   citizenshipNumber String
   documentUrl       String   // S3/Cloudinary link
   selfieUrl         String?
@@ -157,4 +159,16 @@ model LeaseAgreement {
   verifiedAt      DateTime?
   
   createdAt       DateTime    @default(now())
+}
+
+model PushSubscription {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  user      User     @relation("UserPushSubs", fields: [userId], references: [id], onDelete: Cascade)
+  
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  
+  createdAt DateTime @default(now())
 }

@@ -1,0 +1,6 @@
+
+> express-trpc@1.0.0 build D:\sajilokheti\express-trpc
+> tsc
+
+src/server/routes/user/user.routes.ts(7,3): error TS2724: '"../../models/user.models.js"' has no exported member named 'createUserResponseSchema'. Did you mean 'getAllUsersResponseSchema'?
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 2.

@@ -3,6 +3,7 @@ import { acceptApplicationInputSchema, acceptApplicationResponseSchema, getAllAp
 import { adminProcedure, leaserProcedure, ownerProcedure, protectedProcedure, router } from '../../trpc.js';
 import { posthog } from '../../lib/analytics.js';
 import z from 'zod';
+import { sendPushNotification } from '../../lib/push.js';
 export const leaseRouter = router({
     Submitapplication: leaserProcedure
         .meta({ openapi: { method: 'POST', path: '/lease/submit-application', description: 'Submit a lease application' } })
@@ -33,6 +34,12 @@ export const leaseRouter = router({
                 lease_duration_months: input.leaseDurationInMonths,
                 land_owner_id: land.ownerId,
             },
+        });
+        // Notify the land owner
+        await sendPushNotification(land.ownerId, {
+            title: 'New Lease Application',
+            body: `Someone wants to lease your land: ${land.title}.`,
+            url: `/dashboard/applications`
         });
         return {
             leaseAgreementId: leaseApplication.id,
@@ -82,6 +89,12 @@ export const leaseRouter = router({
                 leaser_id: application.leaserId,
                 land_id: application.landId,
             },
+        });
+        // Notify the leaser
+        await sendPushNotification(application.leaserId, {
+            title: 'Application Accepted! 🎉',
+            body: `Your application for ${application.land.title} was accepted! Please complete the escrow payment to lock it in.`,
+            url: `/checkout/${application.id}`
         });
         return {
             success: true,

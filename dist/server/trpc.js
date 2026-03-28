@@ -19,6 +19,18 @@ const isAuthed = t.middleware(({ ctx, next }) => {
     });
 });
 export const protectedProcedure = t.procedure.use(isAuthed);
+const isClerkAuthed = t.middleware(({ ctx, next }) => {
+    if (!ctx.userId) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+    }
+    return next({
+        ctx: {
+            userId: ctx.userId,
+            user: ctx.user,
+        },
+    });
+});
+export const clerkAuthedProcedure = t.procedure.use(isClerkAuthed);
 // 2. The Role-Based procedures now work perfectly
 export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
     if (ctx.user.role !== 'ADMIN') {

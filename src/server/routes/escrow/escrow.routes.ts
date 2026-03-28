@@ -15,6 +15,7 @@ import { adminProcedure, leaserProcedure, ownerProcedure, protectedProcedure, ro
 import { payEscrowService } from '../../services/escrow.service.js';
 import { posthog } from '../../lib/analytics.js';
 import z from 'zod';
+import { sendPushNotification } from '../../lib/push.js';
 
 export const escrowRouter = router({
   PayEscrow: leaserProcedure
@@ -72,6 +73,13 @@ export const escrowRouter = router({
           land_id:        application.landId,
           owner_id:       application.land.ownerId,
         },
+      });
+
+      // Notify the land owner
+      await sendPushNotification(application.land.ownerId, {
+        title: 'Escrow Paid! 💰',
+        body: `The leaser has deposited Rs. ${input.amount} into Escrow for ${application.land.title}.`,
+        url: `/dashboard/escrows`
       });
 
       return {
@@ -384,7 +392,8 @@ export const escrowRouter = router({
           select: {
             applicationId: true,
             amount:        true,
-            application:   { select: { landId: true } },
+            ownerId:       true,
+            application:   { select: { landId: true, leaserId: true } },
           },
         });
 
@@ -418,6 +427,20 @@ export const escrowRouter = router({
           },
         });
 
+        // Notify leaser
+        await sendPushNotification(escrow.application.leaserId, {
+          title: 'Lease Completed! 🎉',
+          body: `The Malpot documents were verified and the lease is now active.`,
+          url: `/dashboard/my-leases`
+        });
+
+        // Notify owner
+        await sendPushNotification(escrow.ownerId, {
+          title: 'Escrow Released! 💸',
+          body: `Escrow funds of Rs. ${escrow.amount} have been released to your account.`,
+          url: `/dashboard/my-owner-escrows`
+        });
+
         return result;
       } else {
         const result = await ctx.prisma.escrow.update({
@@ -434,6 +457,17 @@ export const escrowRouter = router({
           event: 'malpot_rejected',
           properties: { escrow_id: escrowId },
         });
+
+        // Notify both parties of rejection
+        const escRowRej = await ctx.prisma.escrow.findUnique({
+          where: { id: escrowId },
+          select: { ownerId: true, leaserId: true }
+        });
+        if (escRowRej) {
+          const msg = { title: 'Legal Documents Rejected ❌', body: 'The Malpot documents were rejected by the Admin. Please re-upload.', url: `/dashboard/escrows` };
+          await sendPushNotification(escRowRej.ownerId, msg);
+          await sendPushNotification(escRowRej.leaserId, msg);
+        }
 
         return result;
       }

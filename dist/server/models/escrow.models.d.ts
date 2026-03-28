@@ -27,14 +27,6 @@ export declare const payEscrowResponseSchema: z.ZodObject<{
         HIDDEN: "HIDDEN";
     }>;
 }, z.core.$strip>;
-export declare const submitMalpotPapersInputSchema: z.ZodObject<{
-    escrowId: z.ZodString;
-    malpotPaperUrl: z.ZodString;
-}, z.core.$strip>;
-export declare const submitMalpotPapersResponseSchema: z.ZodObject<{
-    success: z.ZodBoolean;
-    message: z.ZodString;
-}, z.core.$strip>;
 export declare const verifyMalpotPapersInputSchema: z.ZodObject<{
     applicationId: z.ZodString;
     malpotPaperUrl: z.ZodString;

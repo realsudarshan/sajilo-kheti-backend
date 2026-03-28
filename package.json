@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
     "postinstall": "prisma generate"
   },
@@ -25,6 +26,7 @@
     "posthog-node": "^5.28.8",
     "swagger-ui-express": "^5.0.1",
     "trpc-to-openapi": "^3.1.0",
+    "web-push": "^3.6.7",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -33,8 +35,10 @@
     "@types/morgan": "^1.9.10",
     "@types/node": "^25.2.0",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/web-push": "^3.6.4",
     "prisma": "~6.19.2",
     "tsc-watch": "^7.2.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.2"
   }
 }

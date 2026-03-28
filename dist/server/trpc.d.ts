@@ -34,6 +34,20 @@ export declare const protectedProcedure: import("@trpc/server").TRPCProcedureBui
         role: import("@prisma/client").$Enums.UserRole;
     };
 }, import("@trpc/server").TRPCUnsetMarker, import("@trpc/server").TRPCUnsetMarker, import("@trpc/server").TRPCUnsetMarker, import("@trpc/server").TRPCUnsetMarker, false>;
+export declare const clerkAuthedProcedure: import("@trpc/server").TRPCProcedureBuilder<{
+    prisma: import("@prisma/client").PrismaClient<import("@prisma/client").Prisma.PrismaClientOptions, never, import("@prisma/client/runtime/library").DefaultArgs>;
+    user: {
+        id: string;
+        role: import("@prisma/client").$Enums.UserRole;
+    } | null;
+    userId: string | null;
+}, OpenApiMeta, {
+    userId: string;
+    user: {
+        id: string;
+        role: import("@prisma/client").$Enums.UserRole;
+    } | null;
+}, import("@trpc/server").TRPCUnsetMarker, import("@trpc/server").TRPCUnsetMarker, import("@trpc/server").TRPCUnsetMarker, import("@trpc/server").TRPCUnsetMarker, false>;
 export declare const adminProcedure: import("@trpc/server").TRPCProcedureBuilder<{
     prisma: import("@prisma/client").PrismaClient<import("@prisma/client").Prisma.PrismaClientOptions, never, import("@prisma/client/runtime/library").DefaultArgs>;
     user: {

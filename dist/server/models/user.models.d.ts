@@ -5,9 +5,9 @@ export declare const UserRoleSchema: z.ZodEnum<{
     ADMIN: "ADMIN";
 }>;
 export declare const KycStatusSchema: z.ZodEnum<{
-    REJECTED: "REJECTED";
     PENDING: "PENDING";
     APPROVED: "APPROVED";
+    REJECTED: "REJECTED";
 }>;
 export declare const UserSchema: z.ZodObject<{
     id: z.ZodString;
@@ -60,14 +60,14 @@ export declare const upgradeRequestResponseSchema: z.ZodObject<{
     citizenshipNumber: z.ZodString;
     documentUrl: z.ZodString;
     selfieUrl: z.ZodNullable<z.ZodString>;
-    paymentNumber: z.ZodString;
+    paymentNumber: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
 export declare const updateKycStatusInputSchema: z.ZodObject<{
     userId: z.ZodString;
     status: z.ZodEnum<{
-        REJECTED: "REJECTED";
         PENDING: "PENDING";
         APPROVED: "APPROVED";
+        REJECTED: "REJECTED";
     }>;
 }, z.core.$strip>;
 export declare const updateKycStatusResponseSchema: z.ZodObject<{

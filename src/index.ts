@@ -13,7 +13,7 @@ const app = express();
 
 app.use(morgan('dev'));
 app.use(cors({
-  origin: 'http://localhost:3000', // Your Next.js URL
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'], // Allow both IPv4/v6 variations
   credentials: true,
 }));
 app.use(express.json());

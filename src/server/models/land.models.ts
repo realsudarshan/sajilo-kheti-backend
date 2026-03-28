@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const LandStatusSchema = z.enum(['AVAILABLE','UNVERIFIED','REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']);
+const LandStatusSchema = z.enum(['AVAILABLE','UNVERIFIED','REJECTED', 'IN_NEGOTIATION', 'LEASED', 'HIDDEN']);
 
 // This handles the compound units (Ropani-Aana-Paisa-Daam, etc.)
 export const LandSizeSchema = z.discriminatedUnion("system", [
