@@ -208,8 +208,8 @@ export const leaseRouter = router({
       const applications = await ctx.prisma.application.findMany({
         where: {
           land: { ownerId: ctx.user.id },
-          ...(input.status   && { status:   input.status }),
-          ...(input.landId   && { landId:   input.landId }),
+          ...(input.status && { status: input.status }),
+          ...(input.landId && { landId: input.landId }),
           ...(input.leaserId && { leaserId: input.leaserId }),
         },
         include: { land: true, leaser: true },
