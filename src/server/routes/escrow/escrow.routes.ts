@@ -23,7 +23,7 @@ export const escrowRouter = router({
       openapi: {
         method: 'POST',
         path: '/lease/pay-escrow',
-        description: 'Leaser pays the escrow amount.',
+        description: 'Leaser-only endpoint to record an escrow payment for an ACCEPTED lease application. Validates that the application exists, belongs to the calling leaser, has ACCEPTED status, has no existing escrow record, and that the land is currently IN_NEGOTIATION. Creates an Escrow record in HOLDING status with the specified amount, payment ID, and platform commission. Sends a Web Push notification to the land owner confirming the deposit. Fires an escrow_paid PostHog event.',
       },
     })
     .input(payEscrowInputSchema)
@@ -100,7 +100,7 @@ export const escrowRouter = router({
       openapi: {
         method: 'POST',
         path: '/lease/verify-malpot-papers',
-        description: 'Admin verifies papers and releases funds.',
+        description: 'Admin-only endpoint to formally verify Malpot (land registry) papers and release escrow funds. Validates that the application and its escrow record exist and that the escrow is in HOLDING status. Atomically: upserts the LeaseAgreement record with the verified Malpot paper URL and admin approval timestamp, marks the application as COMPLETED, sets the land status to LEASED, and releases the escrow to RELEASED. Fires a malpot_verified PostHog event.',
       },
     })
     .input(verifyMalpotPapersInputSchema)
@@ -160,7 +160,7 @@ export const escrowRouter = router({
       openapi: {
         method: 'POST',
         path: '/escrow/save-chat-channel',
-        description: 'Saves the Stream Chat channel ID to the escrow record.',
+        description: 'Leaser-only endpoint to associate a Stream Chat channel ID with an escrow record. Called immediately after the leaser creates a new messaging channel so both parties can find and join the negotiation chat. Validates that the application exists, belongs to the calling leaser, and has an associated escrow record.',
       },
     })
     .input(saveChatChannelInputSchema)
@@ -194,7 +194,7 @@ export const escrowRouter = router({
       openapi: {
         method: 'GET',
         path: '/escrow/my-escrows',
-        description: 'Get all escrows for the logged-in leaser.',
+        description: 'Leaser-only endpoint that returns all escrow records where the authenticated user is the leaser. Each escrow includes the linked application and land details (ID, title, location, hero image, status). Results are ordered newest-first. Used on the leaser dashboard to track the status of active and historical escrow payments.',
       },
     })
     .input(z.object({}))
@@ -228,7 +228,7 @@ export const escrowRouter = router({
       openapi: {
         method: 'GET',
         path: '/escrow/my-owner-escrows',
-        description: 'Get all escrows where the logged-in user is the land owner.',
+        description: 'Owner-only endpoint that returns all escrow records where the authenticated user is the landowner. Each escrow includes the linked application and land details (ID, title, location, hero image, status). Results are ordered newest-first. Used on the landowner dashboard to monitor incoming escrow deposits and track the progress of active lease negotiations.',
       },
     })
     .input(z.object({}))
@@ -262,7 +262,7 @@ export const escrowRouter = router({
       openapi: {
         method: 'GET',
         path: '/escrow/{id}',
-        description: 'Get details of a specific escrow by ID.',
+        description: 'Fetch the full details of a single escrow record by its ID. Accessible to the leaser, the landowner, or an admin associated with the escrow. Returns the escrow amount, payment ID, status, commission, Malpot paper URLs, and the linked application with land details. Throws FORBIDDEN if the requesting user is not a party to the escrow.',
       },
     })
     .input(z.object({ id: z.string() }))
@@ -306,7 +306,7 @@ export const escrowRouter = router({
       openapi: {
         method: 'POST',
         path: '/lease/submit-malpot-papers',
-        description: 'Submit the signed Malpot agreement (Owner or Leaser).',
+        description: 'Allows either the landowner or the leaser to upload their signed Malpot (land registry) agreement document. The uploaded URL is saved to the appropriate field on the escrow record: landownerMalpotUrl for the owner, landleaserMalpotUrl for the leaser. Both parties must upload before the admin can proceed with verification. Validates that the calling user is a party to the specified escrow. Fires a malpot_submitted PostHog event.',
       },
     })
     .input(z.object({
@@ -478,7 +478,7 @@ export const escrowRouter = router({
       openapi: {
         method: 'GET',
         path: '/escrow/admin/agreements',
-        description: 'Get all escrows that have a verified lease agreement (admin only)',
+        description: 'Admin-only endpoint that returns all escrow records where both the landowner and the leaser have uploaded their signed Malpot agreement documents (landownerMalpotUrl and landleaserMalpotUrl are both non-empty). Used on the admin verification dashboard to present the queue of leases ready for final approval or rejection. Includes owner and leaser names and full land details.',
       },
     })
     .output(z.any())

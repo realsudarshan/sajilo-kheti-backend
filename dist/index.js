@@ -1,5 +1,5 @@
 import express from 'express';
-import swaggerUi from 'swagger-ui-express';
+import { apiReference } from '@scalar/express-api-reference';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { createOpenApiExpressMiddleware, generateOpenApiDocument } from 'trpc-to-openapi';
 import { clerkMiddleware } from '@clerk/express';
@@ -53,8 +53,12 @@ app.use('/trpc', trpcExpress.createExpressMiddleware({
     router: appRouter,
     createContext,
 }));
-// 5. Swagger UI
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
+// 5. Scalar API Reference UI
+app.use('/docs', apiReference({
+    url: '/openapi.json',
+    theme: 'saturn',
+    pageTitle: 'SajiloKheti API Reference',
+}));
 // Optional: Serve the JSON file directly at a route
 app.get('/openapi.json', (req, res) => {
     res.json(openApiDocument);
@@ -62,7 +66,7 @@ app.get('/openapi.json', (req, res) => {
 const PORT = 8000;
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📖 Swagger docs at http://localhost:${PORT}/docs`);
+    console.log(`📖 API docs (Scalar) at http://localhost:${PORT}/docs`);
     console.log(`📄 Raw OpenAPI JSON at http://localhost:${PORT}/openapi.json`);
 });
 //# sourceMappingURL=index.js.map

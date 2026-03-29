@@ -13,7 +13,8 @@
     "/users/all": {
       "get": {
         "operationId": "user-getAllUser",
-        "summary": "Get all users with hydrated Clerk data",
+        "summary": "Retrieve all registered users with Clerk-hydrated profile data",
+        "description": "Admin-only endpoint that fetches every user record from the database and cross-references each with Clerk to attach the user's real name, primary email address, and profile image URL. Returns role, KYC verification status, and account creation timestamp alongside the Clerk data.",
         "tags": [
           "Users"
         ],
@@ -138,7 +139,8 @@
     "/users/create": {
       "post": {
         "operationId": "user-createUser",
-        "summary": "Create or upsert a new user",
+        "summary": "Create or upsert a user record from a Clerk webhook event",
+        "description": "Called by the Clerk webhook on user.created events. Uses an upsert so that repeated or late-arriving webhook deliveries are idempotent. New users are assigned the LEASER role by default. Also captures a user_created analytics event in PostHog.",
         "tags": [
           "Users"
         ],
@@ -250,7 +252,8 @@
     "/users/upgrade-request": {
       "post": {
         "operationId": "user-upgradeRequest",
-        "summary": "Submit a KYC upgrade request",
+        "summary": "Submit or re-submit a KYC verification request to become a Landowner",
+        "description": "Allows an authenticated leaser to upload their citizenship document URL, selfie URL, citizenship number, and payment number in order to request a role upgrade from LEASER to OWNER. The record is upserted so users can correct and re-submit a rejected application. Status is always reset to PENDING on submission. Fires a kyc_submitted PostHog event.",
         "tags": [
           "KYC"
         ],
@@ -397,7 +400,8 @@
     "/users/update-kyc-status": {
       "post": {
         "operationId": "user-updateKycStatus",
-        "summary": "Approve or Reject KYC status (Admin)",
+        "summary": "Admin: Approve or reject a pending KYC application and update the user role",
+        "description": "Admin-only endpoint that atomically updates the KYC record status and the user's role and isKycVerified flag in a single database transaction. APPROVED promotes the user to OWNER role and sets isKycVerified=true. REJECTED keeps the user as LEASER and sets isKycVerified=false. Sends a Web Push notification to the user with the outcome and fires a kyc_reviewed PostHog event.",
         "tags": [
           "KYC"
         ],
@@ -517,7 +521,8 @@
     "/users/kyc-details": {
       "get": {
         "operationId": "user-getKycDetails",
-        "summary": "Get current user KYC details",
+        "summary": "Fetch the KYC record for the currently authenticated user",
+        "description": "Returns the full KYC detail record (citizenship number, document URL, selfie URL, payment number, and review status) for the logged-in user. Returns null if no KYC application has been submitted yet. Used by the frontend to show current verification status and pre-fill re-submission forms.",
         "tags": [
           "KYC"
         ],
@@ -591,7 +596,8 @@
     "/users/all-kyc": {
       "get": {
         "operationId": "user-getAllKycDetails",
-        "summary": "Get all KYC applications (Admin)",
+        "summary": "Admin: List all KYC applications hydrated with Clerk user profile data",
+        "description": "Admin-only endpoint that retrieves every KYC detail record from the database and enriches each entry with the applicant's real name and email from Clerk. Used on the admin KYC review dashboard to display pending, approved, and rejected applications in one list.",
         "tags": [
           "KYC"
         ],
@@ -665,7 +671,8 @@
     "/users/me": {
       "get": {
         "operationId": "user-getMe",
-        "summary": "Get full profile of the logged-in user",
+        "summary": "Fetch the complete profile of the currently authenticated user including lands and applications",
+        "description": "Returns the full user record including their KYC details, owned land listings, and all submitted lease applications. If the user exists in Clerk but not yet in the database (webhook race condition), the record is auto-created with the LEASER role before returning. This is the primary bootstrap call made on every page load.",
         "tags": [
           "Users"
         ],
@@ -739,7 +746,8 @@
     "/land/publish": {
       "post": {
         "operationId": "land-publish",
-        "summary": "Publish a new land listing",
+        "summary": "Create a new land listing submitted by a landowner for admin verification",
+        "description": "Allows a landowner to submit a new land listing with title, description, location, GPS coordinates, size (auto-converted to square metres), monthly asking price, hero image, gallery images, and Lalpurja document URL. The listing is created with UNVERIFIED status and will not appear in public search results until an admin approves it. Fires a land_published PostHog event.",
         "tags": [
           "Land"
         ],
@@ -1072,7 +1080,8 @@
     "/land/accept": {
       "post": {
         "operationId": "land-acceptLand",
-        "summary": "Accept and verify a land listing",
+        "summary": "Admin: Approve an UNVERIFIED land listing and make it publicly available",
+        "description": "Admin-only endpoint that transitions a land listing from UNVERIFIED to AVAILABLE status, making it visible in public search results and eligible to receive lease applications. Fires a land_verified PostHog event.",
         "tags": [
           "Land Admin"
         ],
@@ -1155,7 +1164,8 @@
     "/land/reject": {
       "post": {
         "operationId": "land-rejectLand",
-        "summary": "Reject a land listing",
+        "summary": "Admin: Reject a land listing due to invalid or insufficient documentation",
+        "description": "Admin-only endpoint that sets a land listing status to REJECTED, removing it from public search results. Used when the submitted Lalpurja document or land details do not meet verification requirements. The owner must re-submit with corrected information. Fires a land_rejected PostHog event.",
         "tags": [
           "Land Admin"
         ],
@@ -1238,7 +1248,8 @@
     "/land/search": {
       "get": {
         "operationId": "land-search",
-        "summary": "Search for available lands",
+        "summary": "Search publicly available land listings with optional filters",
+        "description": "Public endpoint that returns all land listings with AVAILABLE status. Supports optional filtering by location (case-insensitive partial match), minimum and maximum monthly price range, and minimum and maximum land size in square metres. Results are ordered newest-first. Fires a land_searched PostHog analytics event including the filter parameters and result count.",
         "tags": [
           "Land"
         ],
@@ -1461,7 +1472,8 @@
     "/land/{landId}": {
       "get": {
         "operationId": "land-getById",
-        "summary": "Get land details by ID",
+        "summary": "Fetch full details of a single land listing by its ID",
+        "description": "Public endpoint that returns the complete land record for a given land ID, including all fields such as gallery images, GPS coordinates, Lalpurja URL, and current status. Throws NOT_FOUND if the land does not exist. Fires a land_viewed PostHog event recording the land ID, location, price, and status.",
         "tags": [
           "Land"
         ],
@@ -1646,7 +1658,8 @@
     "/land/update-status": {
       "post": {
         "operationId": "land-updateStatus",
-        "summary": "Manually update land status",
+        "summary": "Admin: Manually override the status of any land listing",
+        "description": "Admin-only escape hatch that directly sets a land listing to any valid status (AVAILABLE, UNVERIFIED, REJECTED, IN_NEGOTIATION, LEASED, HIDDEN). Intended for manual corrections and edge-case overrides; most status transitions happen automatically through the lease and escrow workflows. Fires a land_status_updated PostHog event.",
         "tags": [
           "Land Admin"
         ],
@@ -1765,7 +1778,8 @@
     "/land/admin/all": {
       "get": {
         "operationId": "land-getAllLandsAdmin",
-        "summary": "Get all lands for Admin with optional status filter",
+        "summary": "Admin: List every land listing in the system with owner info, filterable by status",
+        "description": "Admin-only endpoint that returns all land listings across all owners, including the owner's ID and name. Supports an optional status filter to narrow results to a specific lifecycle stage (e.g. UNVERIFIED for the approval queue, LEASED for active leases). Results are ordered newest-first.",
         "tags": [
           "Land Admin"
         ],
@@ -1856,7 +1870,8 @@
     "/land/my-lands": {
       "get": {
         "operationId": "land-getMyLands",
-        "summary": "Get all lands owned by the logged-in user",
+        "summary": "Fetch all land listings belonging to the authenticated user",
+        "description": "Returns all land listings where the ownerId matches the authenticated user. Supports an optional status filter to view only listings in a specific state (e.g. UNVERIFIED pending review, AVAILABLE currently listed, LEASED actively leased). Used on the landowner dashboard to manage their portfolio. Results are ordered newest-first.",
         "tags": [
           "Land"
         ],
@@ -3440,7 +3455,7 @@
     "/lease/pay-escrow": {
       "post": {
         "operationId": "escrow-PayEscrow",
-        "description": "Leaser pays the escrow amount.",
+        "description": "Leaser-only endpoint to record an escrow payment for an ACCEPTED lease application. Validates that the application exists, belongs to the calling leaser, has ACCEPTED status, has no existing escrow record, and that the land is currently IN_NEGOTIATION. Creates an Escrow record in HOLDING status with the specified amount, payment ID, and platform commission. Sends a Web Push notification to the land owner confirming the deposit. Fires an escrow_paid PostHog event.",
         "security": [
           {
             "bearerAuth": []
@@ -3591,7 +3606,7 @@
     "/lease/verify-malpot-papers": {
       "post": {
         "operationId": "escrow-VerifyMalpotPapers",
-        "description": "Admin verifies papers and releases funds.",
+        "description": "Admin-only endpoint to formally verify Malpot (land registry) papers and release escrow funds. Validates that the application and its escrow record exist and that the escrow is in HOLDING status. Atomically: upserts the LeaseAgreement record with the verified Malpot paper URL and admin approval timestamp, marks the application as COMPLETED, sets the land status to LEASED, and releases the escrow to RELEASED. Fires a malpot_verified PostHog event.",
         "security": [
           {
             "bearerAuth": []
@@ -3738,7 +3753,7 @@
     "/escrow/save-chat-channel": {
       "post": {
         "operationId": "escrow-SaveChatChannel",
-        "description": "Saves the Stream Chat channel ID to the escrow record.",
+        "description": "Leaser-only endpoint to associate a Stream Chat channel ID with an escrow record. Called immediately after the leaser creates a new messaging channel so both parties can find and join the negotiation chat. Validates that the application exists, belongs to the calling leaser, and has an associated escrow record.",
         "security": [
           {
             "bearerAuth": []
@@ -3837,7 +3852,7 @@
     "/escrow/my-escrows": {
       "get": {
         "operationId": "escrow-GetMyEscrows",
-        "description": "Get all escrows for the logged-in leaser.",
+        "description": "Leaser-only endpoint that returns all escrow records where the authenticated user is the leaser. Each escrow includes the linked application and land details (ID, title, location, hero image, status). Results are ordered newest-first. Used on the leaser dashboard to track the status of active and historical escrow payments.",
         "security": [
           {
             "bearerAuth": []
@@ -4083,7 +4098,7 @@
     "/escrow/my-owner-escrows": {
       "get": {
         "operationId": "escrow-GetMyOwnerEscrows",
-        "description": "Get all escrows where the logged-in user is the land owner.",
+        "description": "Owner-only endpoint that returns all escrow records where the authenticated user is the landowner. Each escrow includes the linked application and land details (ID, title, location, hero image, status). Results are ordered newest-first. Used on the landowner dashboard to monitor incoming escrow deposits and track the progress of active lease negotiations.",
         "security": [
           {
             "bearerAuth": []
@@ -4329,7 +4344,7 @@
     "/escrow/{id}": {
       "get": {
         "operationId": "escrow-GetEscrowById",
-        "description": "Get details of a specific escrow by ID.",
+        "description": "Fetch the full details of a single escrow record by its ID. Accessible to the leaser, the landowner, or an admin associated with the escrow. Returns the escrow amount, payment ID, status, commission, Malpot paper URLs, and the linked application with land details. Throws FORBIDDEN if the requesting user is not a party to the escrow.",
         "security": [
           {
             "bearerAuth": []
@@ -4510,7 +4525,7 @@
     "/lease/submit-malpot-papers": {
       "post": {
         "operationId": "escrow-SubmitMalpotPapers",
-        "description": "Submit the signed Malpot agreement (Owner or Leaser).",
+        "description": "Allows either the landowner or the leaser to upload their signed Malpot (land registry) agreement document. The uploaded URL is saved to the appropriate field on the escrow record: landownerMalpotUrl for the owner, landleaserMalpotUrl for the leaser. Both parties must upload before the admin can proceed with verification. Validates that the calling user is a party to the specified escrow. Fires a malpot_submitted PostHog event.",
         "security": [
           {
             "bearerAuth": []
@@ -4610,7 +4625,7 @@
     "/escrow/admin/agreements": {
       "get": {
         "operationId": "escrow-GetAllEscrowsAgreementForAdmin",
-        "description": "Get all escrows that have a verified lease agreement (admin only)",
+        "description": "Admin-only endpoint that returns all escrow records where both the landowner and the leaser have uploaded their signed Malpot agreement documents (landownerMalpotUrl and landleaserMalpotUrl are both non-empty). Used on the admin verification dashboard to present the queue of leases ready for final approval or rejection. Includes owner and leaser names and full land details.",
         "security": [
           {
             "bearerAuth": []
@@ -4661,6 +4676,285 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/error.NOT_FOUND"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/push/subscribe": {
+      "post": {
+        "operationId": "push-subscribe",
+        "description": "Registers or refreshes a Web Push subscription for the authenticated user. Accepts the push endpoint URL and the VAPID encryption keys (p256dh and auth). Uses an upsert keyed on the endpoint so re-subscribing on the same device is idempotent. If a user switches devices, both subscriptions coexist until the old one expires (410 Gone) and is cleaned up.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "string"
+                  },
+                  "keys": {
+                    "type": "object",
+                    "properties": {
+                      "p256dh": {
+                        "type": "string"
+                      },
+                      "auth": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "p256dh",
+                      "auth"
+                    ]
+                  }
+                },
+                "required": [
+                  "endpoint",
+                  "keys"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "id"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/push/unsubscribe": {
+      "delete": {
+        "operationId": "push-unsubscribe",
+        "description": "Removes a Web Push subscription for the authenticated user by endpoint URL. Scoped to the calling user so that a user cannot unsubscribe another user's devices. Called automatically by the service worker when the user disables browser push notifications.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "endpoint",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.NOT_FOUND"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/push/test": {
+      "post": {
+        "operationId": "push-testPush",
+        "description": "Development utility that sends a test Web Push notification to all active subscriptions of the authenticated user. Verifies the end-to-end push pipeline is working correctly. Automatically prunes any subscriptions that return a 410 Gone response, meaning the browser has invalidated the subscription (e.g. the user cleared site data).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sent": {
+                      "type": "number"
+                    },
+                    "successCount": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "sent",
+                    "successCount"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
                 }
               }
             }
