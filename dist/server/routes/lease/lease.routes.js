@@ -6,7 +6,7 @@ import z from 'zod';
 import { sendPushNotification } from '../../lib/push.js';
 export const leaseRouter = router({
     Submitapplication: leaserProcedure
-        .meta({ openapi: { method: 'POST', path: '/lease/submit-application', description: 'Submit a lease application' } })
+        .meta({ openapi: { method: 'POST', path: '/lease/submit-application', description: 'Allows an authenticated leaser to submit a new lease application for an available land listing, including proposed rent, duration, and farming plans.' } })
         .input(requestedLeaseInputSchema)
         .output(requestedLeaseResponseSchema)
         .mutation(async ({ ctx, input }) => {
@@ -50,7 +50,7 @@ export const leaseRouter = router({
         };
     }),
     AcceptApplication: ownerProcedure
-        .meta({ openapi: { method: 'POST', path: '/lease/accept-application', description: 'Accept a lease application' } })
+        .meta({ openapi: { method: 'POST', path: '/lease/accept-application', description: 'Allows a land owner to accept a pending lease application. Sets the land status to IN_NEGOTIATION and rejects all other pending applications for the same land.' } })
         .input(acceptApplicationInputSchema)
         .output(acceptApplicationResponseSchema)
         .mutation(async ({ ctx, input }) => {
@@ -108,7 +108,7 @@ export const leaseRouter = router({
         };
     }),
     RejectApplication: ownerProcedure
-        .meta({ openapi: { method: 'POST', path: '/lease/reject-application', description: 'Reject a lease application' } })
+        .meta({ openapi: { method: 'POST', path: '/lease/reject-application', description: 'Allows a land owner to reject a specific pending lease application with an optional reason. Only the owner of the land associated with the application may perform this action.' } })
         .input(rejectApplicationInputSchema)
         .output(rejectApplicationResponseSchema)
         .mutation(async ({ ctx, input }) => {
@@ -140,7 +140,7 @@ export const leaseRouter = router({
         };
     }),
     GetApplicationById: protectedProcedure
-        .meta({ openapi: { method: 'GET', path: '/lease/application/{applicationId}', description: 'Get a lease application by ID' } })
+        .meta({ openapi: { method: 'GET', path: '/lease/application/{applicationId}', description: 'Fetches the full details of a single lease application by its ID. Accessible only to the leaser who submitted it, the owner of the associated land, or an admin.' } })
         .input(getApplicationByIdInputSchema)
         .output(getApplicationByIdResponseSchema)
         .query(async ({ ctx, input }) => {
@@ -159,19 +159,17 @@ export const leaseRouter = router({
         return application;
     }),
     GetAllApplications: ownerProcedure
-        .meta({ openapi: { method: 'GET', path: '/lease/applications', description: 'Get all lease applications' } })
+        .meta({ openapi: { method: 'GET', path: '/lease/applications', description: 'Returns all lease applications submitted against lands owned by the authenticated owner. Supports optional filtering by application status, a specific land ID, or a specific leaser ID.' } })
         .input(getAllApplicationsInputSchema)
         .output(getAllApplicationsResponseSchema)
         .query(async ({ ctx, input }) => {
-        const whereClause = {};
-        if (input.status)
-            whereClause.status = input.status;
-        if (input.landId)
-            whereClause.landId = input.landId;
-        if (input.leaserId)
-            whereClause.leaserId = input.leaserId;
         const applications = await ctx.prisma.application.findMany({
-            where: whereClause,
+            where: {
+                land: { ownerId: ctx.user.id },
+                ...(input.status && { status: input.status }),
+                ...(input.landId && { landId: input.landId }),
+                ...(input.leaserId && { leaserId: input.leaserId }),
+            },
             include: { land: true, leaser: true },
             orderBy: { createdAt: 'desc' },
         });
@@ -182,7 +180,7 @@ export const leaseRouter = router({
         openapi: {
             method: 'GET',
             path: '/lease/my-accepted-applications',
-            description: 'Get all accepted applications for the logged-in leaser',
+            description: 'Returns all lease applications with ACCEPTED status that belong to the authenticated leaser, optionally filtered by land ID. Used to direct the leaser to complete their escrow payment.',
         },
     })
         .input(getMyAcceptedApplicationsInputSchema)
@@ -204,11 +202,12 @@ export const leaseRouter = router({
         openapi: {
             method: 'GET',
             path: '/lease/my-applications',
-            description: 'Get all lease applications submitted by the logged-in leaser',
+            description: 'Returns all lease applications submitted by the authenticated leaser across all lands, with optional filtering by application status and/or a specific land ID.',
         },
     })
         .input(z.object({
         status: z.enum(['PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED']).optional(),
+        landId: z.string().optional(),
     }))
         .output(getAllApplicationsResponseSchema)
         .query(async ({ ctx, input }) => {
@@ -216,6 +215,7 @@ export const leaseRouter = router({
             where: {
                 leaserId: ctx.user.id,
                 ...(input.status && { status: input.status }),
+                ...(input.landId && { landId: input.landId }),
             },
             include: { land: true, leaser: true },
             orderBy: { createdAt: 'desc' },
@@ -225,6 +225,7 @@ export const leaseRouter = router({
     GetMyApplications: leaserProcedure
         .input(z.object({
         status: z.enum(['PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED']).optional(),
+        landId: z.string().optional(),
     }))
         .output(getAllApplicationsResponseSchema)
         .query(async ({ ctx, input }) => {
@@ -232,6 +233,7 @@ export const leaseRouter = router({
             where: {
                 leaserId: ctx.user.id,
                 ...(input.status && { status: input.status }),
+                ...(input.landId && { landId: input.landId }),
             },
             include: { land: true, leaser: true },
             orderBy: { createdAt: 'desc' },

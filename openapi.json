@@ -1947,7 +1947,7 @@
     "/lease/submit-application": {
       "post": {
         "operationId": "lease-Submitapplication",
-        "description": "Submit a lease application",
+        "description": "Allows an authenticated leaser to submit a new lease application for an available land listing, including proposed rent, duration, and farming plans.",
         "security": [
           {
             "bearerAuth": []
@@ -2071,7 +2071,7 @@
     "/lease/accept-application": {
       "post": {
         "operationId": "lease-AcceptApplication",
-        "description": "Accept a lease application",
+        "description": "Allows a land owner to accept a pending lease application. Sets the land status to IN_NEGOTIATION and rejects all other pending applications for the same land.",
         "security": [
           {
             "bearerAuth": []
@@ -2197,7 +2197,7 @@
     "/lease/reject-application": {
       "post": {
         "operationId": "lease-RejectApplication",
-        "description": "Reject a lease application",
+        "description": "Allows a land owner to reject a specific pending lease application with an optional reason. Only the owner of the land associated with the application may perform this action.",
         "security": [
           {
             "bearerAuth": []
@@ -2318,7 +2318,7 @@
     "/lease/application/{applicationId}": {
       "get": {
         "operationId": "lease-GetApplicationById",
-        "description": "Get a lease application by ID",
+        "description": "Fetches the full details of a single lease application by its ID. Accessible only to the leaser who submitted it, the owner of the associated land, or an admin.",
         "security": [
           {
             "bearerAuth": []
@@ -2579,7 +2579,7 @@
     "/lease/applications": {
       "get": {
         "operationId": "lease-GetAllApplications",
-        "description": "Get all lease applications",
+        "description": "Returns all lease applications submitted against lands owned by the authenticated owner. Supports optional filtering by application status, a specific land ID, or a specific leaser ID.",
         "security": [
           {
             "bearerAuth": []
@@ -2875,7 +2875,7 @@
     "/lease/my-accepted-applications": {
       "get": {
         "operationId": "lease-GetMyAcceptedApplications",
-        "description": "Get all accepted applications for the logged-in leaser",
+        "description": "Returns all lease applications with ACCEPTED status that belong to the authenticated leaser, optionally filtered by land ID. Used to direct the leaser to complete their escrow payment.",
         "security": [
           {
             "bearerAuth": []
@@ -3151,7 +3151,7 @@
     "/lease/my-applications": {
       "get": {
         "operationId": "lease-GetMyLeaserApplications",
-        "description": "Get all lease applications submitted by the logged-in leaser",
+        "description": "Returns all lease applications submitted by the authenticated leaser across all lands, with optional filtering by application status and/or a specific land ID.",
         "security": [
           {
             "bearerAuth": []
@@ -3169,6 +3169,13 @@
                 "REJECTED",
                 "COMPLETED"
               ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "landId",
+            "schema": {
+              "type": "string"
             }
           }
         ],

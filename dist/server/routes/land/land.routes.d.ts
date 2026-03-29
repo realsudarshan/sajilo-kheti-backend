@@ -53,7 +53,7 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
             heroImageUrl: string;
             galleryUrls: string[];
             lalpurjaUrl: string | null;
-            status: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+            status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
             createdAt: Date;
             updatedAt: Date;
             owner?: {
@@ -97,7 +97,7 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
                 heroImageUrl: string;
                 galleryUrls: string[];
                 lalpurjaUrl: string | null;
-                status: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                 createdAt: Date;
                 updatedAt: Date;
                 owner?: {
@@ -123,7 +123,7 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
             heroImageUrl: string;
             galleryUrls: string[];
             lalpurjaUrl: string | null;
-            status: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+            status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
             createdAt: Date;
             updatedAt: Date;
             owner?: {
@@ -136,24 +136,24 @@ export declare const landRouter: import("@trpc/server").TRPCBuiltRouter<{
     updateStatus: import("@trpc/server").TRPCMutationProcedure<{
         input: {
             landId: string;
-            status: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+            status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
         };
         output: {
             id: string;
-            status: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+            status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
     getAllLandsAdmin: import("@trpc/server").TRPCQueryProcedure<{
         input: {
-            status?: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN" | undefined;
+            status?: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN" | undefined;
         } | undefined;
         output: any;
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
     getMyLands: import("@trpc/server").TRPCQueryProcedure<{
         input: {
-            status?: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN" | undefined;
+            status?: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN" | undefined;
         };
         output: any;
         meta: import("trpc-to-openapi").OpenApiMeta;

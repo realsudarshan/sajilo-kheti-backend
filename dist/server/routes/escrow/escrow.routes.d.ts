@@ -27,7 +27,7 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
                 amount: number;
                 status: "HOLDING" | "RELEASED" | "REFUNDED";
             };
-            landStatus: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+            landStatus: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
@@ -42,9 +42,9 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
             message: string;
             application: {
                 id: string;
-                status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
+                status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
             };
-            landStatus: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+            landStatus: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
             escrowStatus: "HOLDING" | "RELEASED" | "REFUNDED";
         };
         meta: import("trpc-to-openapi").OpenApiMeta;
@@ -77,7 +77,7 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
                 updatedAt: Date;
                 application: {
                     id: string;
-                    status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
+                    status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
                     leaseDurationInMonths: number;
                     proposedMonthlyRent: number;
                     plans: string;
@@ -86,7 +86,7 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
                         title: string;
                         location: string;
                         heroImageUrl: string;
-                        status: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                        status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                     };
                 };
                 landownerMalpotUrl?: string | null | undefined;
@@ -112,7 +112,7 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
                 updatedAt: Date;
                 application: {
                     id: string;
-                    status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
+                    status: "REJECTED" | "PENDING" | "ACCEPTED" | "COMPLETED";
                     leaseDurationInMonths: number;
                     proposedMonthlyRent: number;
                     plans: string;
@@ -121,7 +121,7 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
                         title: string;
                         location: string;
                         heroImageUrl: string;
-                        status: "REJECTED" | "UNVERIFIED" | "AVAILABLE" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
+                        status: "AVAILABLE" | "UNVERIFIED" | "REJECTED" | "IN_NEGOTIATION" | "LEASED" | "HIDDEN";
                     };
                 };
                 landownerMalpotUrl?: string | null | undefined;
@@ -169,43 +169,43 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
     GetAllEscrowsForAdmin: import("@trpc/server").TRPCQueryProcedure<{
         input: void;
         output: ({
-            leaser: {
-                name: string | null;
-            };
             application: {
                 land: {
                     title: string;
                     location: string;
                 };
             } & {
+                status: import("@prisma/client").$Enums.ApplicationStatus;
                 id: string;
-                createdAt: Date;
-                landId: string;
+                chatChannelId: string | null;
                 leaserId: string;
-                plans: string;
+                createdAt: Date;
                 leaseDurationInMonths: number;
                 proposedMonthlyRent: number;
-                status: import("@prisma/client").$Enums.ApplicationStatus;
-                chatChannelId: string | null;
+                plans: string;
+                landId: string;
                 additionalMessages: string | null;
+            };
+            leaser: {
+                name: string | null;
             };
             owner: {
                 name: string | null;
             };
         } & {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            leaserId: string;
-            status: import("@prisma/client").$Enums.EscrowStatus;
-            chatChannelId: string | null;
             applicationId: string;
-            ownerId: string;
             amount: number;
             paymentId: string | null;
             commission: number;
+            status: import("@prisma/client").$Enums.EscrowStatus;
+            id: string;
+            chatChannelId: string | null;
+            ownerId: string;
+            leaserId: string;
             landownerMalpotUrl: string | null;
             landleaserMalpotUrl: string | null;
+            createdAt: Date;
+            updatedAt: Date;
         })[];
         meta: import("trpc-to-openapi").OpenApiMeta;
     }>;
@@ -215,58 +215,58 @@ export declare const escrowRouter: import("@trpc/server").TRPCBuiltRouter<{
             action: "APPROVE" | "REJECT";
         };
         output: {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            leaserId: string;
-            status: import("@prisma/client").$Enums.EscrowStatus;
-            chatChannelId: string | null;
             applicationId: string;
-            ownerId: string;
             amount: number;
             paymentId: string | null;
             commission: number;
+            status: import("@prisma/client").$Enums.EscrowStatus;
+            id: string;
+            chatChannelId: string | null;
+            ownerId: string;
+            leaserId: string;
             landownerMalpotUrl: string | null;
             landleaserMalpotUrl: string | null;
+            createdAt: Date;
+            updatedAt: Date;
         } | [{
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            leaserId: string;
-            status: import("@prisma/client").$Enums.EscrowStatus;
-            chatChannelId: string | null;
             applicationId: string;
-            ownerId: string;
             amount: number;
             paymentId: string | null;
             commission: number;
+            status: import("@prisma/client").$Enums.EscrowStatus;
+            id: string;
+            chatChannelId: string | null;
+            ownerId: string;
+            leaserId: string;
             landownerMalpotUrl: string | null;
             landleaserMalpotUrl: string | null;
-        }, {
-            id: string;
             createdAt: Date;
-            landId: string;
+            updatedAt: Date;
+        }, {
+            status: import("@prisma/client").$Enums.ApplicationStatus;
+            id: string;
+            chatChannelId: string | null;
             leaserId: string;
-            plans: string;
+            createdAt: Date;
             leaseDurationInMonths: number;
             proposedMonthlyRent: number;
-            status: import("@prisma/client").$Enums.ApplicationStatus;
-            chatChannelId: string | null;
+            plans: string;
+            landId: string;
             additionalMessages: string | null;
         }, {
+            status: import("@prisma/client").$Enums.LandStatus;
             id: string;
+            ownerId: string;
             createdAt: Date;
             updatedAt: Date;
-            description: string;
-            status: import("@prisma/client").$Enums.LandStatus;
-            ownerId: string;
             title: string;
             location: string;
+            heroImageUrl: string;
+            description: string;
             latitude: number;
             longitude: number;
             sizeInSqmeter: number;
             pricePerMonth: number;
-            heroImageUrl: string;
             galleryUrls: string[];
             lalpurjaUrl: string;
         }];
